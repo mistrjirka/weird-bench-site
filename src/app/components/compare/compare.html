@@ -1,0 +1,67 @@
+<div class="container my-4" *ngIf="type(); else empty">
+  <h1 class="mb-3">Compare {{ type() | uppercase }}</h1>
+
+  <div class="mb-3">
+    <button class="btn btn-outline-secondary btn-sm" (click)="clearAndBack()">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </button>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">{{ leftName() }}</h5>
+          <p class="text-muted mb-0">ID: {{ leftId() }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">{{ rightName() }}</h5>
+          <p class="text-muted mb-0">ID: {{ rightId() }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info" *ngIf="summary()">
+    <strong>Average:</strong>
+    {{ summary()!.headline }}
+  </div>
+
+  <div class="card" *ngIf="details().length > 0">
+    <div class="card-header">Benchmarks (common)</div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Benchmark</th>
+              <th class="text-end">Left</th>
+              <th class="text-end">Right</th>
+              <th class="text-end">Delta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of details()">
+              <td>{{ row.name }}</td>
+              <td class="text-end">{{ row.left | number:'1.2-2' }} {{ row.unit }}</td>
+              <td class="text-end">{{ row.right | number:'1.2-2' }} {{ row.unit }}</td>
+              <td class="text-end" [class.text-success]="row.improvement > 0" [class.text-danger]="row.improvement < 0">
+                {{ row.improvement | number:'1.1-1' }}%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #empty>
+  <div class="container my-4">
+    <div class="alert alert-warning">No comparison selected.</div>
+  </div>
+</ng-template>

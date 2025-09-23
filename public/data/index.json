@@ -7,12 +7,26 @@
         "manufacturer": "AMD",
         "cores": 8,
         "benchmarks": {
-          "7zip": "cpu/amd-ryzen-7-5700x3d/7zip.json",
-          "reversan": "cpu/amd-ryzen-7-5700x3d/reversan.json",
-          "llama": "cpu/amd-ryzen-7-5700x3d/llama.json",
-          "blender": "cpu/amd-ryzen-7-5700x3d/blender.json"
+          "7zip": ["cpu/amd-ryzen-7-5700x3d/7zip.json"],
+          "reversan": ["cpu/amd-ryzen-7-5700x3d/reversan.json"],
+          "llama": ["cpu/amd-ryzen-7-5700x3d/llama.json"],
+          "blender": ["cpu/amd-ryzen-7-5700x3d/blender.json"]
         },
         "lastUpdated": 1758650425
+      }
+      ,
+      {
+        "id": "amd-ryzen-ai-9-365",
+        "name": "AMD Ryzen AI 9 365 w/ Radeon 880M",
+        "manufacturer": "AMD",
+        "cores": 10,
+        "benchmarks": {
+          "blender": ["cpu/amd-ryzen-ai-9-365/blender.json"],
+          "llama": ["cpu/amd-ryzen-ai-9-365/llama.json"],
+          "7zip": ["cpu/amd-ryzen-ai-9-365/7zip.json"],
+          "reversan": ["cpu/amd-ryzen-ai-9-365/reversan.json"]
+        },
+        "lastUpdated": 1758663639
       }
     ],
     "gpus": [
@@ -22,19 +36,30 @@
         "manufacturer": "AMD",
         "framework": "HIP",
         "benchmarks": {
-          "7zip": "gpu/amd-radeon-rx-7800-xt/7zip.json",
-          "reversan": "gpu/amd-radeon-rx-7800-xt/reversan.json", 
-          "llama": "gpu/amd-radeon-rx-7800-xt/llama.json",
-          "blender": "gpu/amd-radeon-rx-7800-xt/blender.json"
+          "7zip": ["gpu/amd-radeon-rx-7800-xt/7zip.json"],
+          "reversan": ["gpu/amd-radeon-rx-7800-xt/reversan.json"], 
+          "llama": ["gpu/amd-radeon-rx-7800-xt/llama.json"],
+          "blender": ["gpu/amd-radeon-rx-7800-xt/blender.json"]
         },
         "lastUpdated": 1758650425
+      },
+      {
+        "id": "amd-radeon-880m",
+        "name": "AMD Radeon 880M (Ryzen AI 9 365 iGPU)",
+        "manufacturer": "AMD",
+        "framework": "HIP",
+        "benchmarks": {
+          "llama": ["cpu/amd-ryzen-ai-9-365/llama.json"],
+          "blender": ["cpu/amd-ryzen-ai-9-365/blender.json"]
+        },
+        "lastUpdated": 1758663639
       }
     ]
   },
   "metadata": {
-    "totalHardware": 2,
-    "totalBenchmarks": 8,
-    "lastUpdated": 1758650425,
+    "totalHardware": 3,
+    "totalBenchmarks": 10,
+    "lastUpdated": 1758663639,
     "version": "1.0",
     "benchmarkTypes": ["7zip", "reversan", "llama", "blender"]
   }

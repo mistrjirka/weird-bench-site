@@ -1,13 +1,11 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, map, catchError, of } from 'rxjs';
+import { Observable, BehaviorSubject, map, catchError, of, forkJoin, switchMap } from 'rxjs';
 import { 
   HardwareInfo, 
   HardwareSummary, 
   HardwareListResponse, 
-  HardwareDetailResponse,
-  ApiResponse,
-  BenchmarkResult 
+  HardwareDetailResponse
 } from '../models/benchmark.models';
 
 // Interface for the static index.json structure
@@ -32,7 +30,7 @@ interface IndexHardware {
   cores?: number; // For CPUs
   framework?: string; // For GPUs
   benchmarks: {
-    [key: string]: string; // benchmark type -> file path
+    [key: string]: string[]; // benchmark type -> list of file paths
   };
   lastUpdated: number;
 }
@@ -68,6 +66,14 @@ export class HardwareDataService {
     this.loadHardwareList();
   }
 
+  // Shared metrics helpers
+  public median(values: number[]): number | null {
+    const arr = values.filter(v => typeof v === 'number' && !isNaN(v)).sort((a, b) => a - b);
+    if (!arr.length) return null;
+    const mid = Math.floor(arr.length / 2);
+    return arr.length % 2 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2;
+  }
+
   /**
    * Load the list of all hardware with benchmark summaries from static index.json
    */
@@ -87,7 +93,7 @@ export class HardwareDataService {
             manufacturer: cpu.manufacturer,
             cores: cpu.cores
           },
-          benchmarkCount: Object.keys(cpu.benchmarks).length,
+          benchmarkCount: Object.values(cpu.benchmarks).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0),
           lastUpdated: new Date(cpu.lastUpdated * 1000),
           bestPerformance: undefined,
           averagePerformance: {}
@@ -101,7 +107,7 @@ export class HardwareDataService {
             manufacturer: gpu.manufacturer,
             framework: gpu.framework
           },
-          benchmarkCount: Object.keys(gpu.benchmarks).length,
+          benchmarkCount: Object.values(gpu.benchmarks).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0),
           lastUpdated: new Date(gpu.lastUpdated * 1000),
           bestPerformance: undefined,
           averagePerformance: {}
@@ -157,7 +163,7 @@ export class HardwareDataService {
           ...(type === 'cpu' ? { cores: hardware.cores } : { framework: hardware.framework })
         };
 
-        // For now, return empty benchmarks - we'll implement loading individual files later
+        // For now, return empty benchmarks - detailed files are loaded lazily per component
         this._isLoading.set(false);
         return {
           hardware: hardwareInfo,
@@ -185,11 +191,40 @@ export class HardwareDataService {
    * Load specific benchmark file for hardware
    */
   loadBenchmarkFile(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any> {
-    const filePath = `${this.dataBaseUrl}/${type}/${id}/${benchmarkType}.json`;
-    return this.http.get(filePath).pipe(
-      catchError(error => {
-        console.warn(`Failed to load ${benchmarkType} benchmark for ${type}/${id}`);
-        return of(null);
+    return this.http.get<HardwareIndex>(`${this.dataBaseUrl}/index.json`).pipe(
+      map(index => {
+        const hardware = type === 'cpu'
+          ? index.hardware.cpus.find(h => h.id === id)
+          : index.hardware.gpus.find(h => h.id === id);
+        if (!hardware) throw new Error('Hardware not found');
+        const paths = hardware.benchmarks[benchmarkType] || [];
+        return Array.isArray(paths) ? paths[0] : undefined;
+      }),
+      catchError(() => of(undefined)),
+      switchMap((path?: string) => {
+        if (!path) return of(null);
+        const fullPath = `${this.dataBaseUrl}/${path}`;
+        return this.http.get(fullPath).pipe(catchError(() => of(null)));
+      })
+    );
+  }
+
+  loadBenchmarkFiles(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any[]> {
+    return this.http.get<HardwareIndex>(`${this.dataBaseUrl}/index.json`).pipe(
+      map(index => {
+        const hardware = type === 'cpu'
+          ? index.hardware.cpus.find(h => h.id === id)
+          : index.hardware.gpus.find(h => h.id === id);
+        if (!hardware) throw new Error('Hardware not found');
+        const paths = hardware.benchmarks[benchmarkType] || [];
+        return Array.isArray(paths) ? paths : [];
+      }),
+      catchError(() => of([] as string[])),
+      switchMap((paths: string[]) => {
+        if (!paths.length) return of([]);
+        return forkJoin(
+          paths.map(p => this.http.get(`${this.dataBaseUrl}/${p}`).pipe(catchError(() => of(null))))
+        );
       })
     );
   }
@@ -225,122 +260,5 @@ export class HardwareDataService {
     this._error.set(null);
   }
 
-  /**
-   * Mock data for development - replace with actual API calls
-   */
-  private getMockHardwareList(): Observable<ApiResponse<HardwareListResponse>> {
-    // Simulate API delay
-    return new Observable(observer => {
-      setTimeout(() => {
-        observer.next({
-          success: true,
-          data: {
-            cpus: [
-              {
-                hardware: {
-                  id: 'cpu-amd-ryzen-7-5700x3d-8-core-processor',
-                  name: 'AMD Ryzen 7 5700X3D 8-Core Processor',
-                  type: 'cpu',
-                  manufacturer: 'AMD',
-                  cores: 8,
-                  threads: 16
-                },
-                benchmarkCount: 4,
-                lastUpdated: new Date('2025-09-23'),
-                bestPerformance: {
-                  benchmark: '7zip',
-                  value: 3.99,
-                  unit: 'speedup'
-                },
-                averagePerformance: {
-                  '7zip': 85.2,
-                  'reversan': 92.1,
-                  'llama': 16.6,
-                  'blender': 1142.3
-                }
-              }
-            ],
-            gpus: [
-              {
-                hardware: {
-                  id: 'gpu-amd-radeon-rx-7800-xt',
-                  name: 'AMD Radeon RX 7800 XT',
-                  type: 'gpu',
-                  manufacturer: 'AMD',
-                  memory: 16384
-                },
-                benchmarkCount: 2,
-                lastUpdated: new Date('2025-09-23'),
-                bestPerformance: {
-                  benchmark: 'blender',
-                  value: 1142.3,
-                  unit: 'samples/min'
-                },
-                averagePerformance: {
-                  'llama': 160.9,
-                  'blender': 892.5
-                }
-              }
-            ],
-            totalCount: 2
-          },
-          timestamp: Date.now()
-        });
-        observer.complete();
-      }, 500);
-    });
-  }
-
-  /**
-   * Mock hardware detail data
-   */
-  private getMockHardwareDetail(type: 'cpu' | 'gpu', id: string): Observable<ApiResponse<HardwareDetailResponse>> {
-    return new Observable(observer => {
-      setTimeout(() => {
-        const hardware: HardwareInfo = type === 'cpu' ? {
-          id: 'cpu-amd-ryzen-7-5700x3d-8-core-processor',
-          name: 'AMD Ryzen 7 5700X3D 8-Core Processor',
-          type: 'cpu',
-          manufacturer: 'AMD',
-          cores: 8,
-          threads: 16
-        } : {
-          id: 'gpu-amd-radeon-rx-7800-xt',
-          name: 'AMD Radeon RX 7800 XT',
-          type: 'gpu',
-          manufacturer: 'AMD',
-          memory: 16384
-        };
-
-        observer.next({
-          success: true,
-          data: {
-            hardware,
-            benchmarks: [], // Will be populated with actual benchmark data
-            charts: [
-              {
-                type: 'line',
-                title: type === 'cpu' ? 'Thread Scaling Performance' : 'GPU Performance Over Time',
-                xAxis: {
-                  label: type === 'cpu' ? 'Thread Count' : 'Time',
-                  data: type === 'cpu' ? [1, 2, 4, 8, 16] : ['Jan', 'Feb', 'Mar', 'Apr', 'May']
-                },
-                yAxis: {
-                  label: type === 'cpu' ? 'Speedup Factor' : 'FPS',
-                  unit: type === 'cpu' ? 'x' : 'fps'
-                },
-                series: [{
-                  name: type === 'cpu' ? '7zip Compression' : 'Blender Render',
-                  data: type === 'cpu' ? [1.0, 3.85, 3.99, 3.99, 3.99] : [120, 125, 130, 128, 135],
-                  color: '#007bff'
-                }]
-              }
-            ]
-          },
-          timestamp: Date.now()
-        });
-        observer.complete();
-      }, 300);
-    });
-  }
+  // Removed legacy mock methods to avoid confusion
 }

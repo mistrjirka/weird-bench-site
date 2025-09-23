@@ -124,6 +124,11 @@
                                             {{ getBenchmarkSummary(benchmarkType).totalTokens }}
                                           }
                                         </p>
+                                        <p><strong>Compile Time:</strong>
+                                          @if (typeof getBenchmarkSummary(benchmarkType).compileTimeSeconds === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).compileTimeSeconds | number:'1.2-2' }}s
+                                          } @else { N/A }
+                                        </p>
                                       </div>
                                     }
                                     @case ('blender') {
@@ -178,6 +183,11 @@
                                             N/A
                                           }
                                         </p>
+                                        <p><strong>Depth 10 Time:</strong>
+                                          @if (typeof getBenchmarkSummary(benchmarkType).depth10Time === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).depth10Time | number:'1.2-2' }}s
+                                          } @else { N/A }
+                                        </p>
                                       </div>
                                       <div class="col-md-6">
                                         <p><strong>Best Depth Time:</strong> 
@@ -190,6 +200,7 @@
                                         <p><strong>Best Thread Time:</strong> 
                                           @if (typeof getBenchmarkSummary(benchmarkType).bestThreadTime === 'number') {
                                             {{ getBenchmarkSummary(benchmarkType).bestThreadTime | number:'1.2-2' }}s
+                                            <span *ngIf="getBenchmarkSummary(benchmarkType).bestThreadCount">(at {{ getBenchmarkSummary(benchmarkType).bestThreadCount }} threads)</span>
                                           } @else {
                                             {{ getBenchmarkSummary(benchmarkType).bestThreadTime }}
                                           }
@@ -267,6 +278,16 @@
                                           <small class="text-muted">Total Tokens</small>
                                         </div>
                                       </div>
+                                      <div class="col-md-4 mt-3">
+                                        <div class="text-center">
+                                          <h4 class="text-secondary">
+                                            @if (typeof getBenchmarkSummary(benchmarkType).compileTimeSeconds === 'number') {
+                                              {{ getBenchmarkSummary(benchmarkType).compileTimeSeconds | number:'1.1-1' }}s
+                                            } @else { N/A }
+                                          </h4>
+                                          <small class="text-muted">Compile Time</small>
+                                        </div>
+                                      </div>
                                     }
                                     @case ('blender') {
                                       <div class="col-md-4">
@@ -323,7 +344,7 @@
                                         <div class="text-center">
                                           <h4 class="text-primary">
                                             @if (typeof getBenchmarkSummary(benchmarkType).bestDepthTime === 'number') {
-                                              {{ getBenchmarkSummary(benchmarkType).bestDepthTime | number:'1.1-1' }}s
+                                              {{ getBenchmarkSummary(benchmarkType).bestDepthTime | number:'1.2-2' }}s
                                             } @else {
                                               {{ getBenchmarkSummary(benchmarkType).bestDepthTime }}
                                             }
@@ -335,7 +356,7 @@
                                         <div class="text-center">
                                           <h4 class="text-success">
                                             @if (typeof getBenchmarkSummary(benchmarkType).bestThreadTime === 'number') {
-                                              {{ getBenchmarkSummary(benchmarkType).bestThreadTime | number:'1.1-1' }}s
+                                              {{ getBenchmarkSummary(benchmarkType).bestThreadTime | number:'1.2-2' }}s
                                             } @else {
                                               {{ getBenchmarkSummary(benchmarkType).bestThreadTime }}
                                             }
@@ -345,7 +366,7 @@
                                       </div>
                                       <div class="col-md-4">
                                         <div class="text-center">
-                                          <h4 class="text-info">{{ getBenchmarkSummary(benchmarkType).buildTime | number:'1.1-1' }}s</h4>
+                                          <h4 class="text-info">{{ getBenchmarkSummary(benchmarkType).buildTime | number:'1.2-2' }}s</h4>
                                           <small class="text-muted">Build Time</small>
                                         </div>
                                       </div>

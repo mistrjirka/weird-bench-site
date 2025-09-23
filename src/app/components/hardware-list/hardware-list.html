@@ -1,7 +1,23 @@
 <div class="container my-4">
   <div class="row">
     <div class="col-12">
-      <h1 class="mb-4">Hardware Benchmark Results</h1>
+      <h1 class="mb-3">Hardware Benchmark Results</h1>
+
+      <!-- Search -->
+      <div class="row mb-4">
+        <div class="col-md-8 col-lg-6">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search by name, manufacturer, type, framework, or count..."
+              (input)="onSearchChange($any($event.target).value)"
+            />
+          </div>
+          <div class="form-text">Results update as you type.</div>
+        </div>
+      </div>
       
       <!-- Loading state -->
       @if (isLoading()) {
@@ -22,11 +38,26 @@
       }
       
       <!-- Navigation tabs for CPU/GPU -->
+      <!-- Comparison selection summary bar -->
+      @if (compare.count() > 0) {
+        <div class="alert alert-secondary d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <strong>Comparison:</strong>
+            <span class="badge bg-info text-dark ms-2">Type: {{ compare.selectedType() }}</span>
+            <span class="ms-3">Selected: {{ compare.selectedIds().join(' vs ') }}</span>
+          </div>
+          <div class="d-flex gap-2">
+            <a class="btn btn-primary btn-sm" [class.disabled]="!compare.isReady()" routerLink="/compare">Compare now</a>
+            <button class="btn btn-outline-secondary btn-sm" (click)="compare.clear()">Clear</button>
+          </div>
+        </div>
+      }
+
       <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mb-4">
         <li [ngbNavItem]="'cpu'">
           <button ngbNavLink>
             <i class="bi bi-cpu me-2"></i>
-            CPUs ({{ cpuList().length }})
+            CPUs ({{ filteredCpuList().length }}/{{ cpuList().length }})
           </button>
           <ng-template ngbNavContent>
             <div class="row mt-3">
@@ -37,8 +68,8 @@
                 </p>
               </div>
               
-              @if (cpuList().length > 0) {
-                @for (cpu of cpuList(); track cpu.hardware.id) {
+              @if (filteredCpuList().length > 0) {
+                @for (cpu of filteredCpuList(); track cpu.hardware.id) {
                   <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                       <div class="card-body">
@@ -56,10 +87,21 @@
                           </p>
                         }
                         
-                        <div class="mb-3">
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
                           <small class="text-muted">
                             {{ cpu.benchmarkCount }} benchmark(s) available
                           </small>
+                          <div>
+                            @if (isSelected(cpu.hardware.id)) {
+                              <button class="btn btn-sm btn-outline-danger" (click)="removeFromCompare(cpu.hardware.id)">
+                                <i class="bi bi-x-lg me-1"></i>Remove
+                              </button>
+                            } @else {
+                              <button class="btn btn-sm btn-outline-primary" [disabled]="!canAddToCompare('cpu')" (click)="addToCompare('cpu', cpu.hardware.id)">
+                                <i class="bi bi-plus-lg me-1"></i>Add to comparison
+                              </button>
+                            }
+                          </div>
                         </div>
                         
                         @if (cpu.bestPerformance) {
@@ -80,10 +122,15 @@
                         }
                       </div>
                       <div class="card-footer">
-                        <a routerLink="/hardware/cpu/{{ cpu.hardware.id }}" class="btn btn-primary btn-sm">
+                        <a routerLink="/hardware/cpu/{{ cpu.hardware.id }}" class="btn btn-primary btn-sm me-2">
                           <i class="bi bi-graph-up me-1"></i>
                           View Details
                         </a>  
+                        @if (!isSelected(cpu.hardware.id)) {
+                          <button class="btn btn-outline-primary btn-sm" [disabled]="!canAddToCompare('cpu')" (click)="addToCompare('cpu', cpu.hardware.id)">
+                            <i class="bi bi-plus-lg me-1"></i>Add to comparison
+                          </button>
+                        }
                       </div>
                     </div>
                   </div>
@@ -92,7 +139,7 @@
                 <div class="col-12">
                   <div class="alert alert-info">
                     <i class="bi bi-cpu me-2"></i>
-                    No CPU benchmark results available yet. Upload some benchmark results to see them here!
+                    No CPU results match your search.
                   </div>
                 </div>
               }
@@ -103,7 +150,7 @@
         <li [ngbNavItem]="'gpu'">
           <button ngbNavLink>
             <i class="bi bi-gpu-card me-2"></i>
-            GPUs ({{ gpuList().length }})
+            GPUs ({{ filteredGpuList().length }}/{{ gpuList().length }})
           </button>
           <ng-template ngbNavContent>
             <div class="row mt-3">
@@ -114,8 +161,8 @@
                 </p>
               </div>
               
-              @if (gpuList().length > 0) {
-                @for (gpu of gpuList(); track gpu.hardware.id) {
+              @if (filteredGpuList().length > 0) {
+                @for (gpu of filteredGpuList(); track gpu.hardware.id) {
                   <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                       <div class="card-body">
@@ -133,10 +180,21 @@
                           </p>
                         }
                         
-                        <div class="mb-3">
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
                           <small class="text-muted">
                             {{ gpu.benchmarkCount }} benchmark(s) available
                           </small>
+                          <div>
+                            @if (isSelected(gpu.hardware.id)) {
+                              <button class="btn btn-sm btn-outline-danger" (click)="removeFromCompare(gpu.hardware.id)">
+                                <i class="bi bi-x-lg me-1"></i>Remove
+                              </button>
+                            } @else {
+                              <button class="btn btn-sm btn-outline-primary" [disabled]="!canAddToCompare('gpu')" (click)="addToCompare('gpu', gpu.hardware.id)">
+                                <i class="bi bi-plus-lg me-1"></i>Add to comparison
+                              </button>
+                            }
+                          </div>
                         </div>
                         
                         @if (gpu.bestPerformance) {
@@ -157,10 +215,15 @@
                         }
                       </div>
                       <div class="card-footer">
-                        <a routerLink="/hardware/gpu/{{ gpu.hardware.id }}" class="btn btn-primary btn-sm">
+                        <a routerLink="/hardware/gpu/{{ gpu.hardware.id }}" class="btn btn-primary btn-sm me-2">
                           <i class="bi bi-graph-up me-1"></i>
                           View Details
                         </a>
+                        @if (!isSelected(gpu.hardware.id)) {
+                          <button class="btn btn-outline-primary btn-sm" [disabled]="!canAddToCompare('gpu')" (click)="addToCompare('gpu', gpu.hardware.id)">
+                            <i class="bi bi-plus-lg me-1"></i>Add to comparison
+                          </button>
+                        }
                       </div>
                     </div>
                   </div>
@@ -169,7 +232,7 @@
                 <div class="col-12">
                   <div class="alert alert-info">
                     <i class="bi bi-gpu-card me-2"></i>
-                    No GPU benchmark results available yet. Upload some benchmark results to see them here!
+                    No GPU results match your search.
                   </div>
                 </div>
               }
