@@ -1,0 +1,327 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["meta", "build"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["benchmark_name", "host", "platform", "timestamp"],
+      "properties": {
+        "benchmark_name": {
+          "type": "string",
+          "const": "llama"
+        },
+        "host": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "model_url": {
+          "type": "string"
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "properties": {
+        "cpu_build_timing": {
+          "type": "object",
+          "required": ["config_time_seconds", "build_time_seconds", "total_time_seconds"],
+          "properties": {
+            "config_time_seconds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "build_time_seconds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "total_time_seconds": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "cpu_bench_binary": {
+          "type": "string"
+        },
+        "vulkan_bench_binary": {
+          "type": "string"
+        },
+        "gpu_bench_binary": {
+          "type": "string"
+        },
+        "vulkan_devices": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "vulkan_supported": {
+          "type": "boolean"
+        }
+      }
+    },
+    "runs_cpu": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "prompt_size", "generation_size", "ngl", "returncode", "elapsed_seconds", "metrics"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "cpu"
+          },
+          "prompt_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "generation_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "ngl": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "returncode": {
+            "type": "integer"
+          },
+          "elapsed_seconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "metrics": {
+            "type": "object",
+            "required": ["system_info", "prompt_processing", "generation", "tokens_per_second", "total_time_ms"],
+            "properties": {
+              "system_info": {
+                "type": "object",
+                "required": ["cpu_info", "gpu_info", "backends", "model_type", "model_size", "model_n_params", "n_threads", "n_gpu_layers"],
+                "properties": {
+                  "cpu_info": {
+                    "type": "string"
+                  },
+                  "gpu_info": {
+                    "type": "string"
+                  },
+                  "backends": {
+                    "type": "string"
+                  },
+                  "model_type": {
+                    "type": "string"
+                  },
+                  "model_size": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "model_n_params": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "n_threads": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "n_gpu_layers": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              },
+              "prompt_processing": {
+                "type": "object",
+                "required": ["avg_time_ns", "avg_tokens_per_sec", "stddev_time_ns", "stddev_tokens_per_sec", "avg_time_ms", "samples_ns", "samples_ts"],
+                "properties": {
+                  "avg_time_ns": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "avg_tokens_per_sec": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "stddev_time_ns": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "stddev_tokens_per_sec": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "avg_time_ms": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "samples_ns": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "samples_ts": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "generation": {
+                "type": "object",
+                "required": ["avg_time_ns", "avg_tokens_per_sec", "stddev_time_ns", "stddev_tokens_per_sec", "avg_time_ms", "samples_ns", "samples_ts"],
+                "properties": {
+                  "avg_time_ns": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "avg_tokens_per_sec": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "stddev_time_ns": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "stddev_tokens_per_sec": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "avg_time_ms": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "samples_ns": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "samples_ts": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "tokens_per_second": {
+                "type": "number",
+                "minimum": 0
+              },
+              "total_time_ms": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "raw_json": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "runs_gpu": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "prompt_size", "generation_size", "ngl", "returncode", "elapsed_seconds", "metrics"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "gpu"
+          },
+          "prompt_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "generation_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "ngl": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "returncode": {
+            "type": "integer"
+          },
+          "elapsed_seconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "metrics": {
+            "type": "object",
+            "required": ["system_info", "tokens_per_second", "total_time_ms"],
+            "properties": {
+              "system_info": {
+                "type": "object",
+                "required": ["cpu_info", "gpu_info", "backends", "model_type", "model_size", "model_n_params", "n_threads", "n_gpu_layers"],
+                "properties": {
+                  "cpu_info": {
+                    "type": "string"
+                  },
+                  "gpu_info": {
+                    "type": "string"
+                  },
+                  "backends": {
+                    "type": "string"
+                  },
+                  "model_type": {
+                    "type": "string"
+                  },
+                  "model_size": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "model_n_params": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "n_threads": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "n_gpu_layers": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              },
+              "prompt_processing": {
+                "type": "object"
+              },
+              "generation": {
+                "type": "object"
+              },
+              "tokens_per_second": {
+                "type": "number",
+                "minimum": 0
+              },
+              "total_time_ms": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "raw_json": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  }
+}

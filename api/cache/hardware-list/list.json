@@ -1,0 +1,33 @@
+{
+  "cpus": [
+    {
+      "hardware": {
+        "id": "cpu-amd-ryzen-7-5700x3d-8-core-processor",
+        "name": "AMD Ryzen 7 5700X3D 8-Core Processor",
+        "type": "cpu",
+        "manufacturer": "AMD"
+      },
+      "benchmarkCount": 4,
+      "lastUpdated": 1758650425,
+      "bestPerformance": null,
+      "averagePerformance": {}
+    }
+  ],
+  "gpus": [
+    {
+      "hardware": {
+        "id": "gpu-amd-radeon-rx-7800-xt",
+        "name": "AMD Radeon RX 7800 XT",
+        "type": "gpu",
+        "manufacturer": "AMD",
+        "framework": "HIP"
+      },
+      "benchmarkCount": 4,
+      "lastUpdated": 1758650425,
+      "bestPerformance": null,
+      "averagePerformance": {}
+    }
+  ],
+  "totalCount": 2,
+  "generated_at": 1758656922
+}

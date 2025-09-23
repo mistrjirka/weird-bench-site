@@ -1,0 +1,184 @@
+<div class="container my-4">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-4">Hardware Benchmark Results</h1>
+      
+      <!-- Loading state -->
+      @if (isLoading()) {
+        <div class="d-flex justify-content-center my-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      }
+      
+      <!-- Error state -->
+      @if (error() && !isLoading()) {
+        <div class="alert alert-danger alert-dismissible fade show">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          {{ error() }}
+          <button type="button" class="btn-close" (click)="clearError()"></button>
+        </div>
+      }
+      
+      <!-- Navigation tabs for CPU/GPU -->
+      <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mb-4">
+        <li [ngbNavItem]="'cpu'">
+          <button ngbNavLink>
+            <i class="bi bi-cpu me-2"></i>
+            CPUs ({{ cpuList().length }})
+          </button>
+          <ng-template ngbNavContent>
+            <div class="row mt-3">
+              <div class="col-12 mb-3">
+                <h3>CPU Benchmark Results</h3>
+                <p class="text-muted">
+                  Click on any CPU to view detailed benchmark results and performance comparisons.
+                </p>
+              </div>
+              
+              @if (cpuList().length > 0) {
+                @for (cpu of cpuList(); track cpu.hardware.id) {
+                  <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                      <div class="card-body">
+                        <h5 class="card-title">
+                          <i class="bi bi-cpu me-2"></i>
+                          {{ cpu.hardware.name }}
+                        </h5>
+                        <p class="card-text">
+                          <small class="text-muted">{{ cpu.hardware.manufacturer }}</small>
+                        </p>
+                        
+                        @if (cpu.hardware.cores) {
+                          <p class="card-text">
+                            <strong>Cores:</strong> {{ cpu.hardware.cores }}
+                          </p>
+                        }
+                        
+                        <div class="mb-3">
+                          <small class="text-muted">
+                            {{ cpu.benchmarkCount }} benchmark(s) available
+                          </small>
+                        </div>
+                        
+                        @if (cpu.bestPerformance) {
+                          <div class="mb-2">
+                            <span class="badge bg-success">
+                              Best: {{ cpu.bestPerformance.value }} {{ cpu.bestPerformance.unit }}
+                              ({{ cpu.bestPerformance.benchmark }})
+                            </span>
+                          </div>
+                        }
+                        
+                        @if (cpu.lastUpdated) {
+                          <p class="card-text">
+                            <small class="text-muted">
+                              Last updated: {{ cpu.lastUpdated | date:'short' }}
+                            </small>
+                          </p>
+                        }
+                      </div>
+                      <div class="card-footer">
+                        <a routerLink="/hardware/cpu/{{ cpu.hardware.id }}" class="btn btn-primary btn-sm">
+                          <i class="bi bi-graph-up me-1"></i>
+                          View Details
+                        </a>  
+                      </div>
+                    </div>
+                  </div>
+                }
+              } @else if (!isLoading()) {
+                <div class="col-12">
+                  <div class="alert alert-info">
+                    <i class="bi bi-cpu me-2"></i>
+                    No CPU benchmark results available yet. Upload some benchmark results to see them here!
+                  </div>
+                </div>
+              }
+            </div>
+          </ng-template>
+        </li>
+        
+        <li [ngbNavItem]="'gpu'">
+          <button ngbNavLink>
+            <i class="bi bi-gpu-card me-2"></i>
+            GPUs ({{ gpuList().length }})
+          </button>
+          <ng-template ngbNavContent>
+            <div class="row mt-3">
+              <div class="col-12 mb-3">
+                <h3>GPU Benchmark Results</h3>
+                <p class="text-muted">
+                  Click on any GPU to view detailed benchmark results and performance comparisons.
+                </p>
+              </div>
+              
+              @if (gpuList().length > 0) {
+                @for (gpu of gpuList(); track gpu.hardware.id) {
+                  <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                      <div class="card-body">
+                        <h5 class="card-title">
+                          <i class="bi bi-gpu-card me-2"></i>
+                          {{ gpu.hardware.name }}
+                        </h5>
+                        <p class="card-text">
+                          <small class="text-muted">{{ gpu.hardware.manufacturer }}</small>
+                        </p>
+                        
+                        @if (gpu.hardware.framework) { 
+                          <p class="card-text">
+                            <strong>Framework:</strong> {{ gpu.hardware.framework }}
+                          </p>
+                        }
+                        
+                        <div class="mb-3">
+                          <small class="text-muted">
+                            {{ gpu.benchmarkCount }} benchmark(s) available
+                          </small>
+                        </div>
+                        
+                        @if (gpu.bestPerformance) {
+                          <div class="mb-2">
+                            <span class="badge bg-success">
+                              Best: {{ gpu.bestPerformance.value }} {{ gpu.bestPerformance.unit }}
+                              ({{ gpu.bestPerformance.benchmark }})
+                            </span>
+                          </div>
+                        }
+                        
+                        @if (gpu.lastUpdated) {
+                          <p class="card-text">
+                            <small class="text-muted">
+                              Last updated: {{ gpu.lastUpdated | date:'short' }}
+                            </small>
+                          </p>
+                        }
+                      </div>
+                      <div class="card-footer">
+                        <a routerLink="/hardware/gpu/{{ gpu.hardware.id }}" class="btn btn-primary btn-sm">
+                          <i class="bi bi-graph-up me-1"></i>
+                          View Details
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                }
+              } @else if (!isLoading()) {
+                <div class="col-12">
+                  <div class="alert alert-info">
+                    <i class="bi bi-gpu-card me-2"></i>
+                    No GPU benchmark results available yet. Upload some benchmark results to see them here!
+                  </div>
+                </div>
+              }
+            </div>
+          </ng-template>
+        </li>
+      </ul>
+      
+      <div [ngbNavOutlet]="nav" class="mt-2"></div>
+    </div>
+  </div>
+</div>

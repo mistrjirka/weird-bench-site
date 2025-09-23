@@ -1,6 +1,6 @@
-# WeirdBenchSite
+# Weird Bench - Hardware Benchmarking Website
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.2.
+A modern web application for displaying and comparing hardware benchmark results from CPU and GPU performance tests.
 
 ## Development server
 

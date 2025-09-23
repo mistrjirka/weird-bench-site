@@ -1,0 +1,476 @@
+<div class="container my-4">
+  <div class="row">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a routerLink="/hardware">Hardware</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {{ formatHardwareName() }}
+          </li>
+        </ol>
+      </nav>
+      
+      <!-- Loading state -->
+      @if (isLoading()) {
+        <div class="d-flex justify-content-center my-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading hardware details...</span>
+          </div>
+        </div>
+      }
+      
+      <!-- Error state -->
+      @if (error() && !isLoading()) {
+        <div class="alert alert-danger alert-dismissible fade show">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          {{ error() }}
+          <button type="button" class="btn-close" (click)="clearError()"></button>
+        </div>
+      }
+      
+      <!-- Hardware details -->
+      @if (hardware() && !isLoading()) {
+        <div class="row">
+          <div class="col-12">
+            <h1 class="mb-4">
+              <i class="bi bi-{{ hardwareType() === 'cpu' ? 'cpu' : 'gpu-card' }} me-2"></i>
+              {{ hardware()!.name }}
+            </h1>
+            
+            <!-- Hardware info cards -->
+            <div class="row mb-4">
+              <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h6 class="card-title">
+                      <i class="bi bi-info-circle me-2"></i>Basic Information
+                    </h6>
+                    <p class="mb-1"><strong>Type:</strong> {{ hardwareType().toUpperCase() }}</p>
+                    <p class="mb-1"><strong>Manufacturer:</strong> {{ hardware()!.manufacturer }}</p>
+                    @if (hardware()!.cores) {
+                      <p class="mb-1"><strong>Cores:</strong> {{ hardware()!.cores }}</p>
+                    }
+                    @if (hardware()!.framework) {
+                      <p class="mb-1"><strong>Framework:</strong> {{ hardware()!.framework }}</p>
+                    }
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h6 class="card-title">
+                      <i class="bi bi-graph-up me-2"></i>Benchmarks Available
+                    </h6>
+                    <p class="mb-1"><strong>Total Benchmarks:</strong> {{ getBenchmarkTypes().length }}</p>
+                    <div class="mb-2">
+                      @for (benchmarkType of getBenchmarkTypes(); track benchmarkType) {
+                        <span class="badge bg-primary me-1">{{ benchmarkType }}</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Benchmark data tabs -->
+            @if (getBenchmarkTypes().length > 0) {
+              <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mb-4">
+                <li [ngbNavItem]="'overview'">
+                  <button ngbNavLink>
+                    <i class="bi bi-house me-2"></i>
+                    Overview
+                  </button>
+                  <ng-template ngbNavContent>
+                    <div class="row mt-3">
+                      <div class="col-12">
+                        <h3>Benchmark Overview</h3>
+                        <p class="text-muted mb-4">Summary of all benchmark results for this hardware.</p>
+                        
+                        @for (benchmarkType of getBenchmarkTypes(); track benchmarkType) {
+                          <div class="card mb-3">
+                            <div class="card-header">
+                              <h5 class="mb-0">
+                                <i class="bi bi-speedometer2 me-2"></i>
+                                {{ benchmarkType.toUpperCase() }} Benchmark
+                              </h5>
+                            </div>
+                            <div class="card-body">
+                              @if (getBenchmarkSummary(benchmarkType)) {
+                                <div class="row">
+                                  @switch (benchmarkType) {
+                                    @case ('llama') {
+                                      <div class="col-md-6">
+                                        <p><strong>Type:</strong> {{ getBenchmarkSummary(benchmarkType).type }}</p>
+                                        <p><strong>Prompt Size:</strong> {{ getBenchmarkSummary(benchmarkType).promptSize }} tokens</p>
+                                        <p><strong>Generation Size:</strong> {{ getBenchmarkSummary(benchmarkType).generationSize }} tokens</p>
+                                      </div>
+                                      <div class="col-md-6">
+                                        <p><strong>Elapsed Time:</strong> {{ getBenchmarkSummary(benchmarkType).elapsedSeconds | number:'1.2-2' }}s</p>
+                                        <p><strong>Tokens/Second:</strong> 
+                                          @if (typeof getBenchmarkSummary(benchmarkType).tokensPerSecond === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).tokensPerSecond | number:'1.2-2' }}
+                                          } @else {
+                                            {{ getBenchmarkSummary(benchmarkType).tokensPerSecond }}
+                                          }
+                                        </p>
+                                        <p><strong>Total Tokens:</strong> 
+                                          @if (typeof getBenchmarkSummary(benchmarkType).totalTokens === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).totalTokens | number:'1.0-0' }}
+                                          } @else {
+                                            {{ getBenchmarkSummary(benchmarkType).totalTokens }}
+                                          }
+                                        </p>
+                                      </div>
+                                    }
+                                    @case ('blender') {
+                                      <div class="col-md-6">
+                                        <p><strong>Device:</strong> {{ getBenchmarkSummary(benchmarkType).deviceName }}</p>
+                                        <p><strong>Framework:</strong> {{ getBenchmarkSummary(benchmarkType).framework }}</p>
+                                        <p><strong>Scenes:</strong> {{ getBenchmarkSummary(benchmarkType).scenesCount }}</p>
+                                      </div>
+                                      <div class="col-md-6">
+                                        <p><strong>Total Time:</strong>
+                                          @if (typeof getBenchmarkSummary(benchmarkType).elapsedSeconds === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).elapsedSeconds | number:'1.2-2' }}s
+                                          } @else {
+                                            N/A
+                                          }
+                                        </p>
+                                        <p><strong>Total Score:</strong> 
+                                          @if (typeof getBenchmarkSummary(benchmarkType).totalScore === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).totalScore | number:'1.2-2' }}
+                                          } @else {
+                                            {{ getBenchmarkSummary(benchmarkType).totalScore }}
+                                          }
+                                        </p>
+                                      </div>
+                                    }
+                                    @case ('7zip') {
+                                      <div class="col-md-6">
+                                        <p><strong>Test Data:</strong> {{ getBenchmarkSummary(benchmarkType).testDataSizeMB }}MB</p>
+                                        <p><strong>Best Time:</strong>
+                                          @if (typeof getBenchmarkSummary(benchmarkType).bestTime === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).bestTime | number:'1.2-2' }}s
+                                          } @else {
+                                            N/A
+                                          }
+                                        </p>
+                                        <p><strong>Best Threads:</strong> {{ getBenchmarkSummary(benchmarkType).bestThreads }}</p>
+                                      </div>
+                                      <div class="col-md-6">
+                                        <p><strong>Archive Size:</strong> {{ (getBenchmarkSummary(benchmarkType).archiveSize / 1024 / 1024) | number:'1.2-2' }}MB</p>
+                                        <p><strong>Compression Ratio:</strong> {{ getBenchmarkSummary(benchmarkType).compressionRatio | number:'1.2-2' }}</p>
+                                        <p><strong>Total Runs:</strong> {{ getBenchmarkSummary(benchmarkType).totalRuns }}</p>
+                                      </div>
+                                    }
+                                    @case ('reversan') {
+                                      <div class="col-md-6">
+                                        <p><strong>Depth Tests:</strong> {{ getBenchmarkSummary(benchmarkType).depthTests }}</p>
+                                        <p><strong>Thread Tests:</strong> {{ getBenchmarkSummary(benchmarkType).threadTests }}</p>
+                                        <p><strong>Build Time:</strong>
+                                          @if (typeof getBenchmarkSummary(benchmarkType).buildTime === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).buildTime | number:'1.2-2' }}s
+                                          } @else {
+                                            N/A
+                                          }
+                                        </p>
+                                      </div>
+                                      <div class="col-md-6">
+                                        <p><strong>Best Depth Time:</strong> 
+                                          @if (typeof getBenchmarkSummary(benchmarkType).bestDepthTime === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).bestDepthTime | number:'1.2-2' }}s
+                                          } @else {
+                                            {{ getBenchmarkSummary(benchmarkType).bestDepthTime }}
+                                          }
+                                        </p>
+                                        <p><strong>Best Thread Time:</strong> 
+                                          @if (typeof getBenchmarkSummary(benchmarkType).bestThreadTime === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).bestThreadTime | number:'1.2-2' }}s
+                                          } @else {
+                                            {{ getBenchmarkSummary(benchmarkType).bestThreadTime }}
+                                          }
+                                        </p>
+                                      </div>
+                                    }
+                                  }
+                                </div>
+                              } @else {
+                                <p class="text-muted">No {{ hardwareType() }} data available for this benchmark.</p>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </ng-template>
+                </li>
+                
+                @for (benchmarkType of getBenchmarkTypes(); track benchmarkType) {
+                  <li [ngbNavItem]="benchmarkType">
+                    <button ngbNavLink>
+                      <i class="bi bi-speedometer2 me-2"></i>
+                      {{ benchmarkType.toUpperCase() }}
+                    </button>
+                    <ng-template ngbNavContent>
+                      <div class="row mt-3">
+                        <div class="col-12">
+                          <h3>{{ benchmarkType.toUpperCase() }} Results</h3>
+                          <p class="text-muted mb-4">Detailed {{ hardwareType() }} results for {{ benchmarkType }} benchmark.</p>
+                          
+                          <!-- Summary Card -->
+                          @if (getBenchmarkSummary(benchmarkType)) {
+                            <div class="card mb-4">
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                  <i class="bi bi-graph-up me-2"></i>Performance Summary
+                                </h6>
+                              </div>
+                              <div class="card-body">
+                                <div class="row">
+                                  @switch (benchmarkType) {
+                                    @case ('llama') {
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-primary">
+                                            @if (typeof getBenchmarkSummary(benchmarkType).tokensPerSecond === 'number') {
+                                              {{ getBenchmarkSummary(benchmarkType).tokensPerSecond | number:'1.1-1' }}
+                                            } @else {
+                                              {{ getBenchmarkSummary(benchmarkType).tokensPerSecond }}
+                                            }
+                                          </h4>
+                                          <small class="text-muted">Tokens/Second</small>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-success">
+                                            @if (typeof getBenchmarkSummary(benchmarkType).elapsedSeconds === 'number') {
+                                              {{ getBenchmarkSummary(benchmarkType).elapsedSeconds | number:'1.1-1' }}s
+                                            } @else { N/A }
+                                          </h4>
+                                          <small class="text-muted">Total Time</small>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-info">
+                                            @if (typeof getBenchmarkSummary(benchmarkType).totalTokens === 'number') {
+                                              {{ getBenchmarkSummary(benchmarkType).totalTokens | number:'1.0-0' }}
+                                            } @else {
+                                              {{ getBenchmarkSummary(benchmarkType).totalTokens }}
+                                            }
+                                          </h4>
+                                          <small class="text-muted">Total Tokens</small>
+                                        </div>
+                                      </div>
+                                    }
+                                    @case ('blender') {
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-primary">
+                                            @if (typeof getBenchmarkSummary(benchmarkType).totalScore === 'number') {
+                                              {{ getBenchmarkSummary(benchmarkType).totalScore | number:'1.1-1' }}
+                                            } @else {
+                                              {{ getBenchmarkSummary(benchmarkType).totalScore }}
+                                            }
+                                          </h4>
+                                          <small class="text-muted">Blender Score</small>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-success">
+                                            @if (typeof getBenchmarkSummary(benchmarkType).elapsedSeconds === 'number') {
+                                              {{ getBenchmarkSummary(benchmarkType).elapsedSeconds | number:'1.1-1' }}s
+                                            } @else { N/A }
+                                          </h4>
+                                          <small class="text-muted">Total Time</small>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-info">{{ getBenchmarkSummary(benchmarkType).scenesCount }}</h4>
+                                          <small class="text-muted">Scenes Tested</small>
+                                        </div>
+                                      </div>
+                                    }
+                                    @case ('7zip') {
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-primary">{{ getBenchmarkSummary(benchmarkType).bestTime | number:'1.1-1' }}s</h4>
+                                          <small class="text-muted">Best Time</small>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-success">{{ getBenchmarkSummary(benchmarkType).bestThreads }}</h4>
+                                          <small class="text-muted">Best Threads</small>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-info">{{ getBenchmarkSummary(benchmarkType).compressionRatio | number:'1.2-2' }}</h4>
+                                          <small class="text-muted">Compression Ratio</small>
+                                        </div>
+                                      </div>
+                                    }
+                                    @case ('reversan') {
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-primary">
+                                            @if (typeof getBenchmarkSummary(benchmarkType).bestDepthTime === 'number') {
+                                              {{ getBenchmarkSummary(benchmarkType).bestDepthTime | number:'1.1-1' }}s
+                                            } @else {
+                                              {{ getBenchmarkSummary(benchmarkType).bestDepthTime }}
+                                            }
+                                          </h4>
+                                          <small class="text-muted">Best Depth Time</small>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-success">
+                                            @if (typeof getBenchmarkSummary(benchmarkType).bestThreadTime === 'number') {
+                                              {{ getBenchmarkSummary(benchmarkType).bestThreadTime | number:'1.1-1' }}s
+                                            } @else {
+                                              {{ getBenchmarkSummary(benchmarkType).bestThreadTime }}
+                                            }
+                                          </h4>
+                                          <small class="text-muted">Best Thread Time</small>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-info">{{ getBenchmarkSummary(benchmarkType).buildTime | number:'1.1-1' }}s</h4>
+                                          <small class="text-muted">Build Time</small>
+                                        </div>
+                                      </div>
+                                    }
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          }
+                          
+                          <!-- Filtered Raw Data (Expandable) -->
+                          <div class="card">
+                            <div class="card-header">
+                              <h6 class="mb-0">
+                                <i class="bi bi-code me-2"></i>{{ hardwareType().toUpperCase() }} Data
+                                <small class="text-muted ms-2">(Filtered for {{ hardwareType() }} only)</small>
+                              </h6>
+                            </div>
+                            <div class="card-body">
+                              <details>
+                                <summary class="mb-3">
+                                  <strong>Show Raw Data</strong>
+                                  <small class="text-muted ms-2">Click to expand filtered benchmark data</small>
+                                </summary>
+                                <pre class="small bg-light p-3" style="max-height: 400px; overflow-y: auto;">{{ getFilteredBenchmarkData(benchmarkType) | json }}</pre>
+                              </details>
+                            </div>
+                          </div>
+                          
+                          <!-- Charts -->
+                          <div class="mt-3">
+                            @if (benchmarkType === '7zip' && getBenchmarkSummary(benchmarkType)) {
+                              <div class="row">
+                                <div class="col-lg-6 mb-3">
+                                  <div class="card">
+                                    <div class="card-body">
+                                      <h6 class="card-title">Thread Scaling - Execution Time</h6>
+                                      <app-benchmark-chart
+                                        [data]="getBenchmarkSummary(benchmarkType).threadData || []"
+                                        [chartType]="'line'"
+                                        [title]="'Thread Scaling'"
+                                        [xAxisLabel]="'Number of Threads'"
+                                        [yAxisLabel]="'Time (seconds)'"
+                                        [xAxisKey]="'threads'"
+                                        [yAxisKey]="'time'">
+                                      </app-benchmark-chart>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="col-lg-6 mb-3">
+                                  <div class="card">
+                                    <div class="card-body">
+                                      <h6 class="card-title">Thread Efficiency</h6>
+                                      <app-benchmark-chart
+                                        [data]="getBenchmarkSummary(benchmarkType).threadData || []"
+                                        [chartType]="'line'"
+                                        [title]="'Thread Efficiency'"
+                                        [xAxisLabel]="'Number of Threads'"
+                                        [yAxisLabel]="'Efficiency %'"
+                                        [xAxisKey]="'threads'"
+                                        [yAxisKey]="'efficiency'">
+                                      </app-benchmark-chart>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            } @else if (benchmarkType === 'reversan' && getBenchmarkSummary(benchmarkType)) {
+                              <div class="row">
+                                <div class="col-lg-6 mb-3">
+                                  <div class="card">
+                                    <div class="card-body">
+                                      <h6 class="card-title">Depth Performance</h6>
+                                      <app-benchmark-chart
+                                        [data]="getBenchmarkSummary(benchmarkType).depthData || []"
+                                        [chartType]="'line'"
+                                        [title]="'Performance by Depth'"
+                                        [xAxisLabel]="'Search Depth'"
+                                        [yAxisLabel]="'Elapsed Time (seconds)'"
+                                        [xAxisKey]="'depth'"
+                                        [yAxisKey]="'elapsedSeconds'">
+                                      </app-benchmark-chart>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="col-lg-6 mb-3">
+                                  <div class="card">
+                                    <div class="card-body">
+                                      <h6 class="card-title">Thread Performance</h6>
+                                      <app-benchmark-chart
+                                        [data]="getBenchmarkSummary(benchmarkType).threadData || []"
+                                        [chartType]="'line'"
+                                        [title]="'Performance by Threads'"
+                                        [xAxisLabel]="'Number of Threads'"
+                                        [yAxisLabel]="'Elapsed Time (seconds)'"
+                                        [xAxisKey]="'threads'"
+                                        [yAxisKey]="'elapsedSeconds'">
+                                      </app-benchmark-chart>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            } @else {
+                              <div class="alert alert-info">
+                                <i class="bi bi-graph-up me-2"></i>
+                                <strong>Charts:</strong> This benchmark doesn't have dedicated charts here.
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </ng-template>
+                  </li>
+                }
+              </ul>
+              
+              <div [ngbNavOutlet]="nav" class="mt-2"></div>
+            } @else if (!isLoading() && !error()) {
+              <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                No benchmark data available for this hardware.
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

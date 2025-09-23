@@ -1,0 +1,41 @@
+{
+  "hardware": {
+    "cpus": [
+      {
+        "id": "amd-ryzen-7-5700x3d",
+        "name": "AMD Ryzen 7 5700X3D 8-Core Processor",
+        "manufacturer": "AMD",
+        "cores": 8,
+        "benchmarks": {
+          "7zip": "cpu/amd-ryzen-7-5700x3d/7zip.json",
+          "reversan": "cpu/amd-ryzen-7-5700x3d/reversan.json",
+          "llama": "cpu/amd-ryzen-7-5700x3d/llama.json",
+          "blender": "cpu/amd-ryzen-7-5700x3d/blender.json"
+        },
+        "lastUpdated": 1758650425
+      }
+    ],
+    "gpus": [
+      {
+        "id": "amd-radeon-rx-7800-xt",
+        "name": "AMD Radeon RX 7800 XT",
+        "manufacturer": "AMD",
+        "framework": "HIP",
+        "benchmarks": {
+          "7zip": "gpu/amd-radeon-rx-7800-xt/7zip.json",
+          "reversan": "gpu/amd-radeon-rx-7800-xt/reversan.json", 
+          "llama": "gpu/amd-radeon-rx-7800-xt/llama.json",
+          "blender": "gpu/amd-radeon-rx-7800-xt/blender.json"
+        },
+        "lastUpdated": 1758650425
+      }
+    ]
+  },
+  "metadata": {
+    "totalHardware": 2,
+    "totalBenchmarks": 8,
+    "lastUpdated": 1758650425,
+    "version": "1.0",
+    "benchmarkTypes": ["7zip", "reversan", "llama", "blender"]
+  }
+}

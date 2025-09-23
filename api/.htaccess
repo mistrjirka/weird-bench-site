@@ -1,0 +1,48 @@
+# Weird Bench API .htaccess
+# Handle routing for PHP API endpoints
+
+RewriteEngine On
+
+# Enable CORS for all requests
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+
+# Handle preflight OPTIONS requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ - [R=200,L]
+
+# Redirect all API requests to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Security headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+
+# Deny access to sensitive files
+<Files "*.php~">
+    Deny from all
+</Files>
+
+<Files "*.log">
+    Deny from all
+</Files>
+
+<Files "config.php">
+    <RequireAll>
+        Require local
+    </RequireAll>
+</Files>
+
+# Set maximum upload size
+php_value upload_max_filesize "10M"
+php_value post_max_size "40M"
+php_value memory_limit "128M"
+php_value max_execution_time "60"
+
+# Enable JSON error responses
+php_value display_errors "0"
+php_value log_errors "1"

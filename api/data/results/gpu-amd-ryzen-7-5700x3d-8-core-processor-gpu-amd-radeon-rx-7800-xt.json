@@ -1,0 +1,12 @@
+{
+  "summary": {
+    "benchmark_count": 4,
+    "available_benchmarks": [
+      "llama",
+      "7zip",
+      "reversan",
+      "blender"
+    ],
+    "last_updated": 1758650425
+  }
+}
