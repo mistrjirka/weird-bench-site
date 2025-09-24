@@ -39,7 +39,7 @@ interface IndexHardware {
   providedIn: 'root'
 })
 export class HardwareDataService {
-  private apiBaseUrl = '/api'; // Dynamic API endpoints
+  private apiBaseUrl = '/api'; // Use proxy configuration
   
   // Reactive state management with signals
   private readonly _cpuList = signal<HardwareSummary[]>([]);
@@ -75,13 +75,12 @@ export class HardwareDataService {
   }
 
   /**
-   * Load the list of all hardware with benchmark summaries from dynamic API
+   * Load the list of all hardware with benchmark summaries from API
    */
   loadHardwareList(): Observable<HardwareListResponse> {
     this._isLoading.set(true);
     this._error.set(null);
 
-    // Load dynamic hardware list from API
     return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware`).pipe(
       map(response => {
         // Convert API response to HardwareSummary format
@@ -144,37 +143,36 @@ export class HardwareDataService {
   }
 
   /**
-   * Load detailed information for specific hardware from dynamic API
+   * Load detailed information for specific hardware from API
    */
   loadHardwareDetail(type: 'cpu' | 'gpu', id: string): Observable<HardwareDetailResponse> {
     this._isLoading.set(true);
     this._error.set(null);
 
-    // Load hardware details from API
     return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware-detail&type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
       map(response => {
-        const hardwareData = response.data?.hardware || response.hardware;
-        if (!hardwareData) {
+        const hardwareData = response.data;
+        if (!hardwareData || !hardwareData.hardware) {
+          console.log('Hardware detail response:', response);
           throw new Error(`Hardware ${type}/${id} not found`);
         }
 
-        const hardware = hardwareData;
+        const hardware = hardwareData.hardware;
         
         // Create the base hardware info
         const hardwareInfo: HardwareInfo = {
           id: hardware.id,
           name: hardware.name,
-          type: hardware.type as 'cpu' | 'gpu',
+          type: hardware.type || type,
           manufacturer: hardware.manufacturer,
           ...(hardware.cores ? { cores: hardware.cores } : {}),
           ...(hardware.framework ? { framework: hardware.framework } : {})
         };
 
-        // For now, return empty benchmarks - detailed files are loaded lazily per component
         this._isLoading.set(false);
         return {
           hardware: hardwareInfo,
-          benchmarks: response.data?.benchmarkFiles || [],
+          benchmarks: hardwareData.benchmarkFiles || [],
           charts: []
         };
       }),
@@ -196,7 +194,7 @@ export class HardwareDataService {
   }
 
   /**
-   * Load specific benchmark file for hardware - now gets data directly from API
+   * Load specific benchmark file for hardware - gets data directly from API
    */
   loadBenchmarkFile(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any> {
     return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware-detail&type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(

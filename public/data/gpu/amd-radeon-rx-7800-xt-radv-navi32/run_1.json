@@ -1,0 +1,659 @@
+{
+    "hardware": {
+        "type": "gpu",
+        "id": "amd-radeon-rx-7800-xt-radv-navi32",
+        "name": "AMD Radeon RX 7800 XT (RADV NAVI32)",
+        "manufacturer": "AMD",
+        "framework": "HIP"
+    },
+    "timestamp": 1758747618,
+    "run_number": 1,
+    "benchmarks": {
+        "blender": {
+            "meta": {
+                "benchmark_name": "blender",
+                "host": "homer",
+                "platform": "Linux-6.16.7-arch1-1-x86_64-with-glibc2.42",
+                "timestamp": 1758650499.6855576,
+                "benchmark_url": "https:\/\/download.blender.org\/release\/BlenderBenchmark2.0\/launcher\/benchmark-launcher-cli-3.1.0-linux.tar.gz"
+            },
+            "build": {
+                "launcher_path": "\/home\/jirka\/programovani\/weird-bench\/blender-benchmark\/benchmark-launcher-cli",
+                "build_time_seconds": 0,
+                "notes": "Blender benchmark uses pre-built binaries"
+            },
+            "device_runs": [
+                {
+                    "device_framework": "CPU",
+                    "scenes": [
+                        "monster",
+                        "junkshop",
+                        "classroom"
+                    ],
+                    "success": true,
+                    "elapsed_seconds": 124.72634454900071,
+                    "scene_results": [],
+                    "total_score": 0,
+                    "raw_json": [
+                        {
+                            "timestamp": "2025-09-23T18:02:21.378513+00:00",
+                            "blender_version": {
+                                "version": "4.5.0",
+                                "build_date": "2025-07-15",
+                                "build_time": "01:36:28",
+                                "build_commit_date": "2025-07-14",
+                                "build_commit_time": "17:45",
+                                "build_hash": "8cb6b388974a",
+                                "label": "4.5.0",
+                                "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+                            },
+                            "benchmark_launcher": {
+                                "label": "3.1.0",
+                                "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+                            },
+                            "benchmark_script": {
+                                "label": "3.1.1",
+                                "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+                            },
+                            "scene": {
+                                "label": "monster",
+                                "checksum": "8ff812a02f720433de1403dab447be9541eecca71cc919224a7790d017c1b2ce"
+                            },
+                            "system_info": {
+                                "bitness": "64bit",
+                                "machine": "x86_64",
+                                "system": "Linux",
+                                "dist_name": "Arch Linux",
+                                "dist_version": "rolling",
+                                "devices": [
+                                    {
+                                        "type": "CPU",
+                                        "name": "AMD Ryzen 7 5700X3D 8-Core Processor"
+                                    },
+                                    {
+                                        "type": "HIP",
+                                        "name": "AMD Radeon RX 7800 XT",
+                                        "is_display": false
+                                    }
+                                ],
+                                "num_cpu_sockets": 1,
+                                "num_cpu_cores": 8,
+                                "num_cpu_threads": 16
+                            },
+                            "device_info": {
+                                "device_type": "CPU",
+                                "compute_devices": [
+                                    {
+                                        "type": "CPU",
+                                        "name": "AMD Ryzen 7 5700X3D 8-Core Processor"
+                                    }
+                                ],
+                                "num_cpu_threads": 16
+                            },
+                            "stats": {
+                                "device_peak_memory": 634.34,
+                                "number_of_samples": 65,
+                                "time_for_samples": 35.496454,
+                                "samples_per_minute": 109.87012956280084,
+                                "total_render_time": 36.7389,
+                                "render_time_no_sync": 35.4965,
+                                "time_limit": 30
+                            }
+                        },
+                        {
+                            "timestamp": "2025-09-23T18:03:04.420962+00:00",
+                            "blender_version": {
+                                "version": "4.5.0",
+                                "build_date": "2025-07-15",
+                                "build_time": "01:36:28",
+                                "build_commit_date": "2025-07-14",
+                                "build_commit_time": "17:45",
+                                "build_hash": "8cb6b388974a",
+                                "label": "4.5.0",
+                                "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+                            },
+                            "benchmark_launcher": {
+                                "label": "3.1.0",
+                                "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+                            },
+                            "benchmark_script": {
+                                "label": "3.1.1",
+                                "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+                            },
+                            "scene": {
+                                "label": "junkshop",
+                                "checksum": "f5515a21a1337b908212d8d76733530df83014464a24c585ab7b96000da0cdce"
+                            },
+                            "system_info": {
+                                "bitness": "64bit",
+                                "machine": "x86_64",
+                                "system": "Linux",
+                                "dist_name": "Arch Linux",
+                                "dist_version": "rolling",
+                                "devices": [
+                                    {
+                                        "type": "CPU",
+                                        "name": "AMD Ryzen 7 5700X3D 8-Core Processor"
+                                    },
+                                    {
+                                        "type": "HIP",
+                                        "name": "AMD Radeon RX 7800 XT",
+                                        "is_display": false
+                                    }
+                                ],
+                                "num_cpu_sockets": 1,
+                                "num_cpu_cores": 8,
+                                "num_cpu_threads": 16
+                            },
+                            "device_info": {
+                                "device_type": "CPU",
+                                "compute_devices": [
+                                    {
+                                        "type": "CPU",
+                                        "name": "AMD Ryzen 7 5700X3D 8-Core Processor"
+                                    }
+                                ],
+                                "num_cpu_threads": 16
+                            },
+                            "stats": {
+                                "device_peak_memory": 4774.35,
+                                "number_of_samples": 36,
+                                "time_for_samples": 30.44517,
+                                "samples_per_minute": 70.94721428719235,
+                                "total_render_time": 35.4861,
+                                "render_time_no_sync": 30.4453,
+                                "time_limit": 30
+                            }
+                        },
+                        {
+                            "timestamp": "2025-09-23T18:03:45.408201+00:00",
+                            "blender_version": {
+                                "version": "4.5.0",
+                                "build_date": "2025-07-15",
+                                "build_time": "01:36:28",
+                                "build_commit_date": "2025-07-14",
+                                "build_commit_time": "17:45",
+                                "build_hash": "8cb6b388974a",
+                                "label": "4.5.0",
+                                "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+                            },
+                            "benchmark_launcher": {
+                                "label": "3.1.0",
+                                "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+                            },
+                            "benchmark_script": {
+                                "label": "3.1.1",
+                                "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+                            },
+                            "scene": {
+                                "label": "classroom",
+                                "checksum": "936f0a528f03eba291c67ea87743a0ebde58938fb87471b262721b89b46b875d"
+                            },
+                            "system_info": {
+                                "bitness": "64bit",
+                                "machine": "x86_64",
+                                "system": "Linux",
+                                "dist_name": "Arch Linux",
+                                "dist_version": "rolling",
+                                "devices": [
+                                    {
+                                        "type": "CPU",
+                                        "name": "AMD Ryzen 7 5700X3D 8-Core Processor"
+                                    },
+                                    {
+                                        "type": "HIP",
+                                        "name": "AMD Radeon RX 7800 XT",
+                                        "is_display": false
+                                    }
+                                ],
+                                "num_cpu_sockets": 1,
+                                "num_cpu_cores": 8,
+                                "num_cpu_threads": 16
+                            },
+                            "device_info": {
+                                "device_type": "CPU",
+                                "compute_devices": [
+                                    {
+                                        "type": "CPU",
+                                        "name": "AMD Ryzen 7 5700X3D 8-Core Processor"
+                                    }
+                                ],
+                                "num_cpu_threads": 16
+                            },
+                            "stats": {
+                                "device_peak_memory": 648.57,
+                                "number_of_samples": 33,
+                                "time_for_samples": 38.07896,
+                                "samples_per_minute": 51.9972184114272,
+                                "total_render_time": 38.3543,
+                                "render_time_no_sync": 38.0792,
+                                "time_limit": 30
+                            }
+                        }
+                    ],
+                    "raw_output": "[\n  {\n    \"timestamp\": \"2025-09-23T18:02:21.378513+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"monster\",\n      \"checksum\": \"8ff812a02f720433de1403dab447be9541eecca71cc919224a7790d017c1b2ce\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5700X3D 8-Core Processor\"\n        },\n        {\n          \"type\": \"HIP\",\n          \"name\": \"AMD Radeon RX 7800 XT\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"CPU\",\n      \"compute_devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5700X3D 8-Core Processor\"\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 634.34,\n      \"number_of_samples\": 65,\n      \"time_for_samples\": 35.496454,\n      \"samples_per_minute\": 109.87012956280084,\n      \"total_render_time\": 36.7389,\n      \"render_time_no_sync\": 35.4965,\n      \"time_limit\": 30\n    }\n  },\n  {\n    \"timestamp\": \"2025-09-23T18:03:04.420962+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"junkshop\",\n      \"checksum\": \"f5515a21a1337b908212d8d76733530df83014464a24c585ab7b96000da0cdce\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5700X3D 8-Core Processor\"\n        },\n        {\n          \"type\": \"HIP\",\n          \"name\": \"AMD Radeon RX 7800 XT\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"CPU\",\n      \"compute_devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5700X3D 8-Core Processor\"\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 4774.35,\n      \"number_of_samples\": 36,\n      \"time_for_samples\": 30.44517,\n      \"samples_per_minute\": 70.94721428719235,\n      \"total_render_time\": 35.4861,\n      \"render_time_no_sync\": 30.4453,\n      \"time_limit\": 30\n    }\n  },\n  {\n    \"timestamp\": \"2025-09-23T18:03:45.408201+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"classroom\",\n      \"checksum\": \"936f0a528f03eba291c67ea87743a0ebde58938fb87471b262721b89b46b875d\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5700X3D 8-Core Processor\"\n        },\n        {\n          \"type\": \"HIP\",\n          \"name\": \"AMD Radeon RX 7800 XT\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"CPU\",\n      \"compute_devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5700X3D 8-Core Processor\"\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 648.57,\n      \"number_of_samples\": 33,\n      \"time_for_samples\": 38.07896,\n      \"samples_per_minute\": 51.9972184114272,\n      \"total_render_time\": 38.3543,\n      \"render_time_no_sync\": 38.0792,\n      \"time_limit\": 30\n    }\n  }\n]\n",
+                    "device_name": "AMD Ryzen 7 5700X3D 8-Core Processor"
+                },
+                {
+                    "device_framework": "HIP",
+                    "scenes": [
+                        "monster",
+                        "junkshop",
+                        "classroom"
+                    ],
+                    "success": true,
+                    "elapsed_seconds": 118.88307298700056,
+                    "scene_results": [],
+                    "total_score": 0,
+                    "raw_json": [
+                        {
+                            "timestamp": "2025-09-23T18:04:21.827122+00:00",
+                            "blender_version": {
+                                "version": "4.5.0",
+                                "build_date": "2025-07-15",
+                                "build_time": "01:36:28",
+                                "build_commit_date": "2025-07-14",
+                                "build_commit_time": "17:45",
+                                "build_hash": "8cb6b388974a",
+                                "label": "4.5.0",
+                                "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+                            },
+                            "benchmark_launcher": {
+                                "label": "3.1.0",
+                                "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+                            },
+                            "benchmark_script": {
+                                "label": "3.1.1",
+                                "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+                            },
+                            "scene": {
+                                "label": "monster",
+                                "checksum": "8ff812a02f720433de1403dab447be9541eecca71cc919224a7790d017c1b2ce"
+                            },
+                            "system_info": {
+                                "bitness": "64bit",
+                                "machine": "x86_64",
+                                "system": "Linux",
+                                "dist_name": "Arch Linux",
+                                "dist_version": "rolling",
+                                "devices": [
+                                    {
+                                        "type": "CPU",
+                                        "name": "AMD Ryzen 7 5700X3D 8-Core Processor"
+                                    },
+                                    {
+                                        "type": "HIP",
+                                        "name": "AMD Radeon RX 7800 XT",
+                                        "is_display": false
+                                    }
+                                ],
+                                "num_cpu_sockets": 1,
+                                "num_cpu_cores": 8,
+                                "num_cpu_threads": 16
+                            },
+                            "device_info": {
+                                "device_type": "HIP",
+                                "compute_devices": [
+                                    {
+                                        "type": "HIP",
+                                        "name": "AMD Radeon RX 7800 XT",
+                                        "is_display": false
+                                    }
+                                ],
+                                "num_cpu_threads": 16
+                            },
+                            "stats": {
+                                "device_peak_memory": 931.53,
+                                "number_of_samples": 577,
+                                "time_for_samples": 30.306421,
+                                "samples_per_minute": 1142.3321810252685,
+                                "total_render_time": 32.1115,
+                                "render_time_no_sync": 30.3065,
+                                "time_limit": 30
+                            }
+                        },
+                        {
+                            "timestamp": "2025-09-23T18:05:10.904770+00:00",
+                            "blender_version": {
+                                "version": "4.5.0",
+                                "build_date": "2025-07-15",
+                                "build_time": "01:36:28",
+                                "build_commit_date": "2025-07-14",
+                                "build_commit_time": "17:45",
+                                "build_hash": "8cb6b388974a",
+                                "label": "4.5.0",
+                                "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+                            },
+                            "benchmark_launcher": {
+                                "label": "3.1.0",
+                                "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+                            },
+                            "benchmark_script": {
+                                "label": "3.1.1",
+                                "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+                            },
+                            "scene": {
+                                "label": "junkshop",
+                                "checksum": "f5515a21a1337b908212d8d76733530df83014464a24c585ab7b96000da0cdce"
+                            },
+                            "system_info": {
+                                "bitness": "64bit",
+                                "machine": "x86_64",
+                                "system": "Linux",
+                                "dist_name": "Arch Linux",
+                                "dist_version": "rolling",
+                                "devices": [
+                                    {
+                                        "type": "CPU",
+                                        "name": "AMD Ryzen 7 5700X3D 8-Core Processor"
+                                    },
+                                    {
+                                        "type": "HIP",
+                                        "name": "AMD Radeon RX 7800 XT",
+                                        "is_display": false
+                                    }
+                                ],
+                                "num_cpu_sockets": 1,
+                                "num_cpu_cores": 8,
+                                "num_cpu_threads": 16
+                            },
+                            "device_info": {
+                                "device_type": "HIP",
+                                "compute_devices": [
+                                    {
+                                        "type": "HIP",
+                                        "name": "AMD Radeon RX 7800 XT",
+                                        "is_display": false
+                                    }
+                                ],
+                                "num_cpu_threads": 16
+                            },
+                            "stats": {
+                                "device_peak_memory": 4763.51,
+                                "number_of_samples": 336,
+                                "time_for_samples": 30.14313,
+                                "samples_per_minute": 668.8091117279461,
+                                "total_render_time": 38.0492,
+                                "render_time_no_sync": 30.1433,
+                                "time_limit": 30
+                            }
+                        },
+                        {
+                            "timestamp": "2025-09-23T18:05:44.277928+00:00",
+                            "blender_version": {
+                                "version": "4.5.0",
+                                "build_date": "2025-07-15",
+                                "build_time": "01:36:28",
+                                "build_commit_date": "2025-07-14",
+                                "build_commit_time": "17:45",
+                                "build_hash": "8cb6b388974a",
+                                "label": "4.5.0",
+                                "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+                            },
+                            "benchmark_launcher": {
+                                "label": "3.1.0",
+                                "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+                            },
+                            "benchmark_script": {
+                                "label": "3.1.1",
+                                "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+                            },
+                            "scene": {
+                                "label": "classroom",
+                                "checksum": "936f0a528f03eba291c67ea87743a0ebde58938fb87471b262721b89b46b875d"
+                            },
+                            "system_info": {
+                                "bitness": "64bit",
+                                "machine": "x86_64",
+                                "system": "Linux",
+                                "dist_name": "Arch Linux",
+                                "dist_version": "rolling",
+                                "devices": [
+                                    {
+                                        "type": "CPU",
+                                        "name": "AMD Ryzen 7 5700X3D 8-Core Processor"
+                                    },
+                                    {
+                                        "type": "HIP",
+                                        "name": "AMD Radeon RX 7800 XT",
+                                        "is_display": false
+                                    }
+                                ],
+                                "num_cpu_sockets": 1,
+                                "num_cpu_cores": 8,
+                                "num_cpu_threads": 16
+                            },
+                            "device_info": {
+                                "device_type": "HIP",
+                                "compute_devices": [
+                                    {
+                                        "type": "HIP",
+                                        "name": "AMD Radeon RX 7800 XT",
+                                        "is_display": false
+                                    }
+                                ],
+                                "num_cpu_threads": 16
+                            },
+                            "stats": {
+                                "device_peak_memory": 992.75,
+                                "number_of_samples": 289,
+                                "time_for_samples": 30.509119,
+                                "samples_per_minute": 568.3546614374542,
+                                "total_render_time": 31.1504,
+                                "render_time_no_sync": 30.5093,
+                                "time_limit": 30
+                            }
+                        }
+                    ],
+                    "raw_output": "[\n  {\n    \"timestamp\": \"2025-09-23T18:04:21.827122+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"monster\",\n      \"checksum\": \"8ff812a02f720433de1403dab447be9541eecca71cc919224a7790d017c1b2ce\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5700X3D 8-Core Processor\"\n        },\n        {\n          \"type\": \"HIP\",\n          \"name\": \"AMD Radeon RX 7800 XT\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"HIP\",\n      \"compute_devices\": [\n        {\n          \"type\": \"HIP\",\n          \"name\": \"AMD Radeon RX 7800 XT\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 931.53,\n      \"number_of_samples\": 577,\n      \"time_for_samples\": 30.306421,\n      \"samples_per_minute\": 1142.3321810252685,\n      \"total_render_time\": 32.1115,\n      \"render_time_no_sync\": 30.3065,\n      \"time_limit\": 30\n    }\n  },\n  {\n    \"timestamp\": \"2025-09-23T18:05:10.904770+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"junkshop\",\n      \"checksum\": \"f5515a21a1337b908212d8d76733530df83014464a24c585ab7b96000da0cdce\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5700X3D 8-Core Processor\"\n        },\n        {\n          \"type\": \"HIP\",\n          \"name\": \"AMD Radeon RX 7800 XT\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"HIP\",\n      \"compute_devices\": [\n        {\n          \"type\": \"HIP\",\n          \"name\": \"AMD Radeon RX 7800 XT\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 4763.51,\n      \"number_of_samples\": 336,\n      \"time_for_samples\": 30.14313,\n      \"samples_per_minute\": 668.8091117279461,\n      \"total_render_time\": 38.0492,\n      \"render_time_no_sync\": 30.1433,\n      \"time_limit\": 30\n    }\n  },\n  {\n    \"timestamp\": \"2025-09-23T18:05:44.277928+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"classroom\",\n      \"checksum\": \"936f0a528f03eba291c67ea87743a0ebde58938fb87471b262721b89b46b875d\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5700X3D 8-Core Processor\"\n        },\n        {\n          \"type\": \"HIP\",\n          \"name\": \"AMD Radeon RX 7800 XT\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"HIP\",\n      \"compute_devices\": [\n        {\n          \"type\": \"HIP\",\n          \"name\": \"AMD Radeon RX 7800 XT\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 992.75,\n      \"number_of_samples\": 289,\n      \"time_for_samples\": 30.509119,\n      \"samples_per_minute\": 568.3546614374542,\n      \"total_render_time\": 31.1504,\n      \"render_time_no_sync\": 30.5093,\n      \"time_limit\": 30\n    }\n  }\n]\n",
+                    "device_name": "AMD Radeon RX 7800 XT"
+                }
+            ],
+            "scenes_tested": [
+                "monster",
+                "junkshop",
+                "classroom"
+            ],
+            "successful_runs": 2,
+            "total_devices_tested": 2
+        },
+        "llama": {
+            "meta": {
+                "benchmark_name": "llama",
+                "host": "homer",
+                "platform": "Linux-6.16.7-arch1-1-x86_64-with-glibc2.42",
+                "timestamp": 1758650014.1901853,
+                "repo": "https:\/\/github.com\/ggml-org\/llama.cpp",
+                "model_url": "https:\/\/huggingface.co\/unsloth\/Qwen3-4B-Instruct-2507-GGUF\/resolve\/main\/Qwen3-4B-Instruct-2507-IQ4_NL.gguf?download=true"
+            },
+            "build": {
+                "cpu_build_timing": {
+                    "config_time_seconds": 1.0229036199998518,
+                    "build_time_seconds": 86.44968330700067,
+                    "total_time_seconds": 87.47258692700052
+                },
+                "cpu_bench_binary": "\/home\/jirka\/programovani\/weird-bench\/llama.cpp\/build_cpu\/bin\/llama-bench",
+                "vulkan_bench_binary": "\/home\/jirka\/programovani\/weird-bench\/llama.cpp\/build_vulkan\/bin\/llama-bench",
+                "gpu_bench_binary": "\/home\/jirka\/programovani\/weird-bench\/llama.cpp\/build_vulkan\/bin\/llama-bench",
+                "vulkan_devices": [
+                    "vulkan_device_0"
+                ],
+                "vulkan_supported": true
+            },
+            "runs_gpu": [
+                {
+                    "type": "gpu",
+                    "prompt_size": 512,
+                    "generation_size": 64,
+                    "ngl": 99,
+                    "returncode": 0,
+                    "elapsed_seconds": 4.372717561000172,
+                    "metrics": {
+                        "system_info": {
+                            "cpu_info": "AMD Ryzen 7 5700X3D 8-Core Processor",
+                            "gpu_info": "AMD Radeon RX 7800 XT (RADV NAVI32)",
+                            "backends": "Vulkan",
+                            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+                            "model_size": 2375386624,
+                            "model_n_params": 4022468096,
+                            "n_threads": 8,
+                            "n_gpu_layers": 99
+                        },
+                        "prompt_processing": {
+                            "avg_time_ns": 253103546,
+                            "avg_tokens_per_sec": 2023.001356,
+                            "stddev_time_ns": 2115393,
+                            "stddev_tokens_per_sec": 17.028863,
+                            "avg_time_ms": 253.103546,
+                            "samples_ns": [
+                                249590497,
+                                253445842,
+                                255340594,
+                                253563824,
+                                253576974
+                            ],
+                            "samples_ts": [
+                                2051.36,
+                                2020.16,
+                                2005.16,
+                                2019.22,
+                                2019.11
+                            ]
+                        },
+                        "generation": {
+                            "avg_time_ns": 397868352,
+                            "avg_tokens_per_sec": 160.857293,
+                            "stddev_time_ns": 283147,
+                            "stddev_tokens_per_sec": 0.114565,
+                            "avg_time_ms": 397.868352,
+                            "samples_ns": [
+                                397381540,
+                                397880066,
+                                397982038,
+                                397997417,
+                                398100699
+                            ],
+                            "samples_ts": [
+                                161.054,
+                                160.852,
+                                160.811,
+                                160.805,
+                                160.763
+                            ]
+                        },
+                        "tokens_per_second": 160.857293,
+                        "total_time_ms": 650.971898
+                    },
+                    "raw_json": [
+                        {
+                            "build_commit": "f505bd8",
+                            "build_number": 1,
+                            "cpu_info": "AMD Ryzen 7 5700X3D 8-Core Processor",
+                            "gpu_info": "AMD Radeon RX 7800 XT (RADV NAVI32)",
+                            "backends": "Vulkan",
+                            "model_filename": "\/home\/jirka\/programovani\/weird-bench\/llama.cpp\/models\/Qwen3-4B-Instruct-2507-IQ4_NL.gguf",
+                            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+                            "model_size": 2375386624,
+                            "model_n_params": 4022468096,
+                            "n_batch": 2048,
+                            "n_ubatch": 512,
+                            "n_threads": 8,
+                            "cpu_mask": "0x0",
+                            "cpu_strict": false,
+                            "poll": 50,
+                            "type_k": "f16",
+                            "type_v": "f16",
+                            "n_gpu_layers": 99,
+                            "n_cpu_moe": 0,
+                            "split_mode": "layer",
+                            "main_gpu": 0,
+                            "no_kv_offload": false,
+                            "flash_attn": false,
+                            "devices": "auto",
+                            "tensor_split": "0.00",
+                            "tensor_buft_overrides": "none",
+                            "use_mmap": true,
+                            "embeddings": false,
+                            "no_op_offload": 0,
+                            "n_prompt": 512,
+                            "n_gen": 0,
+                            "n_depth": 0,
+                            "test_time": "2025-09-23T18:00:21Z",
+                            "avg_ns": 253103546,
+                            "stddev_ns": 2115393,
+                            "avg_ts": 2023.001356,
+                            "stddev_ts": 17.028863,
+                            "samples_ns": [
+                                249590497,
+                                253445842,
+                                255340594,
+                                253563824,
+                                253576974
+                            ],
+                            "samples_ts": [
+                                2051.36,
+                                2020.16,
+                                2005.16,
+                                2019.22,
+                                2019.11
+                            ]
+                        },
+                        {
+                            "build_commit": "f505bd8",
+                            "build_number": 1,
+                            "cpu_info": "AMD Ryzen 7 5700X3D 8-Core Processor",
+                            "gpu_info": "AMD Radeon RX 7800 XT (RADV NAVI32)",
+                            "backends": "Vulkan",
+                            "model_filename": "\/home\/jirka\/programovani\/weird-bench\/llama.cpp\/models\/Qwen3-4B-Instruct-2507-IQ4_NL.gguf",
+                            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+                            "model_size": 2375386624,
+                            "model_n_params": 4022468096,
+                            "n_batch": 2048,
+                            "n_ubatch": 512,
+                            "n_threads": 8,
+                            "cpu_mask": "0x0",
+                            "cpu_strict": false,
+                            "poll": 50,
+                            "type_k": "f16",
+                            "type_v": "f16",
+                            "n_gpu_layers": 99,
+                            "n_cpu_moe": 0,
+                            "split_mode": "layer",
+                            "main_gpu": 0,
+                            "no_kv_offload": false,
+                            "flash_attn": false,
+                            "devices": "auto",
+                            "tensor_split": "0.00",
+                            "tensor_buft_overrides": "none",
+                            "use_mmap": true,
+                            "embeddings": false,
+                            "no_op_offload": 0,
+                            "n_prompt": 0,
+                            "n_gen": 64,
+                            "n_depth": 0,
+                            "test_time": "2025-09-23T18:00:23Z",
+                            "avg_ns": 397868352,
+                            "stddev_ns": 283147,
+                            "avg_ts": 160.857293,
+                            "stddev_ts": 0.114565,
+                            "samples_ns": [
+                                397381540,
+                                397880066,
+                                397982038,
+                                397997417,
+                                398100699
+                            ],
+                            "samples_ts": [
+                                161.054,
+                                160.852,
+                                160.811,
+                                160.805,
+                                160.763
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

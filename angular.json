@@ -64,7 +64,8 @@
               "buildTarget": "weird-bench-site:build:production"
             },
             "development": {
-              "buildTarget": "weird-bench-site:build:development"
+              "buildTarget": "weird-bench-site:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

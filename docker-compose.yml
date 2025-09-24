@@ -1,34 +1,49 @@
 
+version: '3.8'
 
 services:
-  php-backend:
-    image: php:8.3-apache
+  weird-bench-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8000"  # Internal port only, not exposed to host
+    volumes:
+      # Mount data directory for persistence
+      - ./data:/app/data
+      # Mount schemas directory
+      - ./schemas:/app/schemas:ro
+    environment:
+      - DATA_DIR=/app/data
+      - DATABASE_URL=sqlite+aiosqlite:///app/data/benchmarks.db
+      - PYTHONPATH=/app/backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - backend
+
+  # Nginx reverse proxy to serve both frontend and API
+  nginx:
+    image: nginx:alpine
     ports:
       - "8090:80"
-    environment:
-      APACHE_DOCUMENT_ROOT: /var/www/html
     volumes:
-      - ./public:/var/www/html/public
-      - ./api:/var/www/html/api
-      - ./schemas:/var/www/html/schemas
-      - benchmark_data:/var/www/html/data
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - weird-bench-api
+    restart: unless-stopped
     networks:
-      - benchmark-network
-  # Optional: Add database if needed later
-  # mysql:
-  #   image: mysql:8.0
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: benchmark
-  #     MYSQL_DATABASE: benchmarks
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #   networks:
-  #     - benchmark-network
+      - backend
 
 networks:
-  benchmark-network:
+  backend:
     driver: bridge
 
 volumes:
-  benchmark_data:
-  # mysql_data:
+  data:
+    driver: local

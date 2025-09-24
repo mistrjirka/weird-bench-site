@@ -1,0 +1,45 @@
+{
+    "hardware": {
+        "type": "gpu",
+        "id": "amd-radeon-rx-7800-xt",
+        "name": "AMD Radeon RX 7800 XT",
+        "manufacturer": "AMD",
+        "framework": "HIP"
+    },
+    "timestamp": 1758747375,
+    "run_number": 1,
+    "benchmarks": {
+        "blender": {
+            "benchmark_name": "BMW27 (GPU)",
+            "device_runs": [
+                {
+                    "device_name": "AMD Radeon RX 7800 XT",
+                    "device_framework": "HIP",
+                    "raw_json": [
+                        {
+                            "system_info": {
+                                "devices": [
+                                    {
+                                        "name": "AMD Ryzen 7 5700X3D 8-Core Processor",
+                                        "type": "CPU"
+                                    },
+                                    {
+                                        "name": "AMD Radeon RX 7800 XT",
+                                        "type": "GPU"
+                                    }
+                                ],
+                                "num_cpu_cores": 8,
+                                "num_cpu_threads": 16
+                            }
+                        }
+                    ],
+                    "stats": {
+                        "device_peak_memory": 16106127360,
+                        "render_time_no_sync": 32.95,
+                        "render_time_with_sync": 33.12
+                    }
+                }
+            ]
+        }
+    }
+}
