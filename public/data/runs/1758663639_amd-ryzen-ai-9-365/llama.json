@@ -1,0 +1,376 @@
+{
+  "benchmark_name": "llama",
+  "timestamp": 1758663327.9580595,
+  "results": {
+    "meta": {
+      "benchmark_name": "llama",
+      "host": "localhost.localdomain",
+      "platform": "Linux-6.16.7-1-default-x86_64-with-glibc2.42",
+      "timestamp": 1758663107.9176495,
+      "repo": "https://github.com/ggml-org/llama.cpp",
+      "model_url": "https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen3-4B-Instruct-2507-IQ4_NL.gguf?download=true"
+    },
+    "build": {
+      "cpu_build_timing": {
+        "config_time_seconds": 0.8343486009980552,
+        "build_time_seconds": 63.36207069399825,
+        "total_time_seconds": 64.1964192949963
+      },
+      "cpu_bench_binary": "/home/jirka/programy/weird-bench/llama.cpp/build_cpu/bin/llama-bench",
+      "vulkan_bench_binary": "/home/jirka/programy/weird-bench/llama.cpp/build_vulkan/bin/llama-bench",
+      "gpu_bench_binary": "/home/jirka/programy/weird-bench/llama.cpp/build_vulkan/bin/llama-bench",
+      "vulkan_devices": [
+        "vulkan_device_0"
+      ],
+      "vulkan_supported": true
+    },
+    "runs_cpu": [
+      {
+        "type": "cpu",
+        "prompt_size": 512,
+        "generation_size": 64,
+        "ngl": 0,
+        "returncode": 0,
+        "elapsed_seconds": 30.677786325999477,
+        "metrics": {
+          "system_info": {
+            "cpu_info": "AMD Ryzen AI 9 365 w/ Radeon 880M",
+            "gpu_info": "",
+            "backends": "CPU",
+            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+            "model_size": 2375386624,
+            "model_n_params": 4022468096,
+            "n_threads": 10,
+            "n_gpu_layers": 99
+          },
+          "prompt_processing": {
+            "avg_time_ns": 3239913082,
+            "avg_tokens_per_sec": 158.031178,
+            "stddev_time_ns": 13671004,
+            "stddev_tokens_per_sec": 0.665858,
+            "avg_time_ms": 3239.913082,
+            "samples_ns": [
+              3235182167,
+              3223056103,
+              3260248280,
+              3236882845,
+              3244196015
+            ],
+            "samples_ts": [
+              158.26,
+              158.855,
+              157.043,
+              158.177,
+              157.82
+            ]
+          },
+          "generation": {
+            "avg_time_ns": 2130440808,
+            "avg_tokens_per_sec": 30.050231,
+            "stddev_time_ns": 42538168,
+            "stddev_tokens_per_sec": 0.594736,
+            "avg_time_ms": 2130.440808,
+            "samples_ns": [
+              2100536503,
+              2097478980,
+              2101662234,
+              2165547593,
+              2186978731
+            ],
+            "samples_ts": [
+              30.4684,
+              30.5128,
+              30.4521,
+              29.5537,
+              29.2641
+            ]
+          },
+          "tokens_per_second": 30.050231,
+          "total_time_ms": 5370.35389
+        },
+        "raw_json": [
+          {
+            "build_commit": "f505bd8",
+            "build_number": 1,
+            "cpu_info": "AMD Ryzen AI 9 365 w/ Radeon 880M",
+            "gpu_info": "",
+            "backends": "CPU",
+            "model_filename": "/home/jirka/programy/weird-bench/llama.cpp/models/Qwen3-4B-Instruct-2507-IQ4_NL.gguf",
+            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+            "model_size": 2375386624,
+            "model_n_params": 4022468096,
+            "n_batch": 2048,
+            "n_ubatch": 512,
+            "n_threads": 10,
+            "cpu_mask": "0x0",
+            "cpu_strict": false,
+            "poll": 50,
+            "type_k": "f16",
+            "type_v": "f16",
+            "n_gpu_layers": 99,
+            "n_cpu_moe": 0,
+            "split_mode": "layer",
+            "main_gpu": 0,
+            "no_kv_offload": false,
+            "flash_attn": false,
+            "devices": "auto",
+            "tensor_split": "0.00",
+            "tensor_buft_overrides": "none",
+            "use_mmap": true,
+            "embeddings": false,
+            "no_op_offload": 0,
+            "n_prompt": 512,
+            "n_gen": 0,
+            "n_depth": 0,
+            "test_time": "2025-09-23T21:34:40Z",
+            "avg_ns": 3239913082,
+            "stddev_ns": 13671004,
+            "avg_ts": 158.031178,
+            "stddev_ts": 0.665858,
+            "samples_ns": [
+              3235182167,
+              3223056103,
+              3260248280,
+              3236882845,
+              3244196015
+            ],
+            "samples_ts": [
+              158.26,
+              158.855,
+              157.043,
+              158.177,
+              157.82
+            ]
+          },
+          {
+            "build_commit": "f505bd8",
+            "build_number": 1,
+            "cpu_info": "AMD Ryzen AI 9 365 w/ Radeon 880M",
+            "gpu_info": "",
+            "backends": "CPU",
+            "model_filename": "/home/jirka/programy/weird-bench/llama.cpp/models/Qwen3-4B-Instruct-2507-IQ4_NL.gguf",
+            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+            "model_size": 2375386624,
+            "model_n_params": 4022468096,
+            "n_batch": 2048,
+            "n_ubatch": 512,
+            "n_threads": 10,
+            "cpu_mask": "0x0",
+            "cpu_strict": false,
+            "poll": 50,
+            "type_k": "f16",
+            "type_v": "f16",
+            "n_gpu_layers": 99,
+            "n_cpu_moe": 0,
+            "split_mode": "layer",
+            "main_gpu": 0,
+            "no_kv_offload": false,
+            "flash_attn": false,
+            "devices": "auto",
+            "tensor_split": "0.00",
+            "tensor_buft_overrides": "none",
+            "use_mmap": true,
+            "embeddings": false,
+            "no_op_offload": 0,
+            "n_prompt": 0,
+            "n_gen": 64,
+            "n_depth": 0,
+            "test_time": "2025-09-23T21:35:00Z",
+            "avg_ns": 2130440808,
+            "stddev_ns": 42538168,
+            "avg_ts": 30.050231,
+            "stddev_ts": 0.594736,
+            "samples_ns": [
+              2100536503,
+              2097478980,
+              2101662234,
+              2165547593,
+              2186978731
+            ],
+            "samples_ts": [
+              30.4684,
+              30.5128,
+              30.4521,
+              29.5537,
+              29.2641
+            ]
+          }
+        ]
+      }
+    ],
+    "runs_gpu": [
+      {
+        "type": "gpu",
+        "prompt_size": 512,
+        "generation_size": 64,
+        "ngl": 99,
+        "returncode": 0,
+        "elapsed_seconds": 16.762726065997413,
+        "metrics": {
+          "system_info": {
+            "cpu_info": "AMD Ryzen AI 9 365 w/ Radeon 880M",
+            "gpu_info": "AMD Radeon Graphics (RADV GFX1150)",
+            "backends": "Vulkan",
+            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+            "model_size": 2375386624,
+            "model_n_params": 4022468096,
+            "n_threads": 10,
+            "n_gpu_layers": 99
+          },
+          "prompt_processing": {
+            "avg_time_ns": 1096632578,
+            "avg_tokens_per_sec": 466.890769,
+            "stddev_time_ns": 4725714,
+            "stddev_tokens_per_sec": 2.017762,
+            "avg_time_ms": 1096.632578,
+            "samples_ns": [
+              1101411849,
+              1097736137,
+              1099472463,
+              1089176400,
+              1095366044
+            ],
+            "samples_ts": [
+              464.858,
+              466.414,
+              465.678,
+              470.08,
+              467.424
+            ]
+          },
+          "generation": {
+            "avg_time_ns": 1915211606,
+            "avg_tokens_per_sec": 33.417207,
+            "stddev_time_ns": 8551085,
+            "stddev_tokens_per_sec": 0.149519,
+            "avg_time_ms": 1915.211606,
+            "samples_ns": [
+              1920867506,
+              1923561065,
+              1902954052,
+              1918753953,
+              1909921454
+            ],
+            "samples_ts": [
+              33.3183,
+              33.2716,
+              33.6319,
+              33.355,
+              33.5092
+            ]
+          },
+          "tokens_per_second": 33.417207,
+          "total_time_ms": 3011.844184
+        },
+        "raw_json": [
+          {
+            "build_commit": "f505bd8",
+            "build_number": 1,
+            "cpu_info": "AMD Ryzen AI 9 365 w/ Radeon 880M",
+            "gpu_info": "AMD Radeon Graphics (RADV GFX1150)",
+            "backends": "Vulkan",
+            "model_filename": "/home/jirka/programy/weird-bench/llama.cpp/models/Qwen3-4B-Instruct-2507-IQ4_NL.gguf",
+            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+            "model_size": 2375386624,
+            "model_n_params": 4022468096,
+            "n_batch": 2048,
+            "n_ubatch": 512,
+            "n_threads": 10,
+            "cpu_mask": "0x0",
+            "cpu_strict": false,
+            "poll": 50,
+            "type_k": "f16",
+            "type_v": "f16",
+            "n_gpu_layers": 99,
+            "n_cpu_moe": 0,
+            "split_mode": "layer",
+            "main_gpu": 0,
+            "no_kv_offload": false,
+            "flash_attn": false,
+            "devices": "auto",
+            "tensor_split": "0.00",
+            "tensor_buft_overrides": "none",
+            "use_mmap": true,
+            "embeddings": false,
+            "no_op_offload": 0,
+            "n_prompt": 512,
+            "n_gen": 0,
+            "n_depth": 0,
+            "test_time": "2025-09-23T21:35:11Z",
+            "avg_ns": 1096632578,
+            "stddev_ns": 4725714,
+            "avg_ts": 466.890769,
+            "stddev_ts": 2.017762,
+            "samples_ns": [
+              1101411849,
+              1097736137,
+              1099472463,
+              1089176400,
+              1095366044
+            ],
+            "samples_ts": [
+              464.858,
+              466.414,
+              465.678,
+              470.08,
+              467.424
+            ]
+          },
+          {
+            "build_commit": "f505bd8",
+            "build_number": 1,
+            "cpu_info": "AMD Ryzen AI 9 365 w/ Radeon 880M",
+            "gpu_info": "AMD Radeon Graphics (RADV GFX1150)",
+            "backends": "Vulkan",
+            "model_filename": "/home/jirka/programy/weird-bench/llama.cpp/models/Qwen3-4B-Instruct-2507-IQ4_NL.gguf",
+            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+            "model_size": 2375386624,
+            "model_n_params": 4022468096,
+            "n_batch": 2048,
+            "n_ubatch": 512,
+            "n_threads": 10,
+            "cpu_mask": "0x0",
+            "cpu_strict": false,
+            "poll": 50,
+            "type_k": "f16",
+            "type_v": "f16",
+            "n_gpu_layers": 99,
+            "n_cpu_moe": 0,
+            "split_mode": "layer",
+            "main_gpu": 0,
+            "no_kv_offload": false,
+            "flash_attn": false,
+            "devices": "auto",
+            "tensor_split": "0.00",
+            "tensor_buft_overrides": "none",
+            "use_mmap": true,
+            "embeddings": false,
+            "no_op_offload": 0,
+            "n_prompt": 0,
+            "n_gen": 64,
+            "n_depth": 0,
+            "test_time": "2025-09-23T21:35:18Z",
+            "avg_ns": 1915211606,
+            "stddev_ns": 8551085,
+            "avg_ts": 33.417207,
+            "stddev_ts": 0.149519,
+            "samples_ns": [
+              1920867506,
+              1923561065,
+              1902954052,
+              1918753953,
+              1909921454
+            ],
+            "samples_ts": [
+              33.3183,
+              33.2716,
+              33.6319,
+              33.355,
+              33.5092
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

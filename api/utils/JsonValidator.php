@@ -1,4 +1,4 @@
-&lt;?php
+<?php
 class JsonValidator {
     private $schemas = [];
 
@@ -209,4 +209,4 @@ class JsonValidator {
         return $errors;
     }
 }
-?&gt;
+?>

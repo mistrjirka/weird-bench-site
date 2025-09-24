@@ -39,7 +39,7 @@ interface IndexHardware {
   providedIn: 'root'
 })
 export class HardwareDataService {
-  private dataBaseUrl = '/data'; // Static JSON files
+  private apiBaseUrl = '/api'; // Dynamic API endpoints
   
   // Reactive state management with signals
   private readonly _cpuList = signal<HardwareSummary[]>([]);
@@ -75,40 +75,46 @@ export class HardwareDataService {
   }
 
   /**
-   * Load the list of all hardware with benchmark summaries from static index.json
+   * Load the list of all hardware with benchmark summaries from dynamic API
    */
   loadHardwareList(): Observable<HardwareListResponse> {
     this._isLoading.set(true);
     this._error.set(null);
 
-    // Load static index.json file
-    return this.http.get<HardwareIndex>(`${this.dataBaseUrl}/index.json`).pipe(
-      map(index => {
-        // Convert index format to HardwareSummary format
-        const cpus: HardwareSummary[] = index.hardware.cpus.map(cpu => ({
+    // Load dynamic hardware list from API
+    return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware`).pipe(
+      map(response => {
+        // Convert API response to HardwareSummary format
+        const hardwareData = response.data?.hardware || response.hardware || {};
+        
+        // Process CPUs
+        const cpus: HardwareSummary[] = (hardwareData.cpus || []).map((hw: any) => ({
           hardware: {
-            id: cpu.id,
-            name: cpu.name,
+            id: hw.id,
+            name: hw.name,
             type: 'cpu' as const,
-            manufacturer: cpu.manufacturer,
-            cores: cpu.cores
+            manufacturer: hw.manufacturer,
+            ...(hw.cores ? { cores: hw.cores } : {})
           },
-          benchmarkCount: Object.values(cpu.benchmarks).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0),
-          lastUpdated: new Date(cpu.lastUpdated * 1000),
+          benchmarkCount: Object.values(hw.benchmarks || {}).reduce((sum: number, arr: any) => 
+            sum + (Array.isArray(arr) ? arr.length : 0), 0),
+          lastUpdated: new Date(hw.lastUpdated * 1000),
           bestPerformance: undefined,
           averagePerformance: {}
         }));
 
-        const gpus: HardwareSummary[] = index.hardware.gpus.map(gpu => ({
+        // Process GPUs
+        const gpus: HardwareSummary[] = (hardwareData.gpus || []).map((hw: any) => ({
           hardware: {
-            id: gpu.id,
-            name: gpu.name,
+            id: hw.id,
+            name: hw.name,
             type: 'gpu' as const,
-            manufacturer: gpu.manufacturer,
-            framework: gpu.framework
+            manufacturer: hw.manufacturer,
+            ...(hw.framework ? { framework: hw.framework } : {})
           },
-          benchmarkCount: Object.values(gpu.benchmarks).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0),
-          lastUpdated: new Date(gpu.lastUpdated * 1000),
+          benchmarkCount: Object.values(hw.benchmarks || {}).reduce((sum: number, arr: any) => 
+            sum + (Array.isArray(arr) ? arr.length : 0), 0),
+          lastUpdated: new Date(hw.lastUpdated * 1000),
           bestPerformance: undefined,
           averagePerformance: {}
         }));
@@ -125,7 +131,8 @@ export class HardwareDataService {
         };
       }),
       catchError(error => {
-        this._error.set('Failed to load hardware index');
+        console.error('Failed to load hardware list:', error);
+        this._error.set('Failed to load hardware list');
         this._isLoading.set(false);
         return of({
           cpus: [],
@@ -137,41 +144,42 @@ export class HardwareDataService {
   }
 
   /**
-   * Load detailed information for specific hardware from static JSON files
+   * Load detailed information for specific hardware from dynamic API
    */
   loadHardwareDetail(type: 'cpu' | 'gpu', id: string): Observable<HardwareDetailResponse> {
     this._isLoading.set(true);
     this._error.set(null);
 
-    // First load the index to get file paths
-    return this.http.get<HardwareIndex>(`${this.dataBaseUrl}/index.json`).pipe(
-      map(index => {
-        const hardware = type === 'cpu' 
-          ? index.hardware.cpus.find(h => h.id === id)
-          : index.hardware.gpus.find(h => h.id === id);
-
-        if (!hardware) {
+    // Load hardware details from API
+    return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware-detail&type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
+      map(response => {
+        const hardwareData = response.data?.hardware || response.hardware;
+        if (!hardwareData) {
           throw new Error(`Hardware ${type}/${id} not found`);
         }
 
+        const hardware = hardwareData;
+        
         // Create the base hardware info
         const hardwareInfo: HardwareInfo = {
           id: hardware.id,
           name: hardware.name,
-          type,
+          type: hardware.type as 'cpu' | 'gpu',
           manufacturer: hardware.manufacturer,
-          ...(type === 'cpu' ? { cores: hardware.cores } : { framework: hardware.framework })
+          ...(hardware.cores ? { cores: hardware.cores } : {}),
+          ...(hardware.framework ? { framework: hardware.framework } : {})
         };
 
         // For now, return empty benchmarks - detailed files are loaded lazily per component
         this._isLoading.set(false);
         return {
           hardware: hardwareInfo,
-          benchmarks: [],
+          benchmarks: response.data?.benchmarkFiles || [],
           charts: []
         };
       }),
       catchError(error => {
+        console.error('Failed to load hardware details:', error);
         this._error.set('Failed to load hardware details');
         this._isLoading.set(false);
         return of({
@@ -188,43 +196,42 @@ export class HardwareDataService {
   }
 
   /**
-   * Load specific benchmark file for hardware
+   * Load specific benchmark file for hardware - now gets data directly from API
    */
   loadBenchmarkFile(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any> {
-    return this.http.get<HardwareIndex>(`${this.dataBaseUrl}/index.json`).pipe(
-      map(index => {
-        const hardware = type === 'cpu'
-          ? index.hardware.cpus.find(h => h.id === id)
-          : index.hardware.gpus.find(h => h.id === id);
-        if (!hardware) throw new Error('Hardware not found');
-        const paths = hardware.benchmarks[benchmarkType] || [];
-        return Array.isArray(paths) ? paths[0] : undefined;
+    return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware-detail&type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
+      map(response => {
+        const benchmarkFiles = response.data?.benchmarkFiles || [];
+        if (!benchmarkFiles || !Array.isArray(benchmarkFiles)) return null;
+        
+        // Find the first benchmark of the specific type
+        const benchmark = benchmarkFiles.find((b: any) => b.type === benchmarkType);
+        return benchmark ? benchmark.data : null;
       }),
-      catchError(() => of(undefined)),
-      switchMap((path?: string) => {
-        if (!path) return of(null);
-        const fullPath = `${this.dataBaseUrl}/${path}`;
-        return this.http.get(fullPath).pipe(catchError(() => of(null)));
+      catchError(error => {
+        console.error(`Failed to load ${benchmarkType} benchmark for ${id}:`, error);
+        return of(null);
       })
     );
   }
 
   loadBenchmarkFiles(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any[]> {
-    return this.http.get<HardwareIndex>(`${this.dataBaseUrl}/index.json`).pipe(
-      map(index => {
-        const hardware = type === 'cpu'
-          ? index.hardware.cpus.find(h => h.id === id)
-          : index.hardware.gpus.find(h => h.id === id);
-        if (!hardware) throw new Error('Hardware not found');
-        const paths = hardware.benchmarks[benchmarkType] || [];
-        return Array.isArray(paths) ? paths : [];
+    return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware-detail&type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
+      map(response => {
+        const benchmarkFiles = response.data?.benchmarkFiles || [];
+        if (!benchmarkFiles || !Array.isArray(benchmarkFiles)) return [];
+        
+        // Find all benchmarks of the specific type
+        const benchmarks = benchmarkFiles
+          .filter((b: any) => b.type === benchmarkType)
+          .map((b: any) => b.data)
+          .filter((data: any) => data !== null);
+        
+        return benchmarks;
       }),
-      catchError(() => of([] as string[])),
-      switchMap((paths: string[]) => {
-        if (!paths.length) return of([]);
-        return forkJoin(
-          paths.map(p => this.http.get(`${this.dataBaseUrl}/${p}`).pipe(catchError(() => of(null))))
-        );
+      catchError(error => {
+        console.error(`Failed to load ${benchmarkType} benchmarks for ${id}:`, error);
+        return of([]);
       })
     );
   }

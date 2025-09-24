@@ -1,0 +1,34 @@
+
+
+services:
+  php-backend:
+    image: php:8.3-apache
+    ports:
+      - "8090:80"
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html
+    volumes:
+      - ./public:/var/www/html/public
+      - ./api:/var/www/html/api
+      - ./schemas:/var/www/html/schemas
+      - benchmark_data:/var/www/html/data
+    networks:
+      - benchmark-network
+  # Optional: Add database if needed later
+  # mysql:
+  #   image: mysql:8.0
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: benchmark
+  #     MYSQL_DATABASE: benchmarks
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   networks:
+  #     - benchmark-network
+
+networks:
+  benchmark-network:
+    driver: bridge
+
+volumes:
+  benchmark_data:
+  # mysql_data:

@@ -1,4 +1,4 @@
-&lt;?php
+<?php
 class FileStorageManager {
     private $dataDir;
     private $cacheDir;
@@ -549,4 +549,4 @@ class FileStorageManager {
         }
     }
 }
-?&gt;
+?>

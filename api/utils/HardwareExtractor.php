@@ -1,4 +1,4 @@
-&lt;?php
+<?php
 class HardwareExtractor {
     
     /**
@@ -307,4 +307,4 @@ class HardwareExtractor {
         return trim($text, '-');
     }
 }
-?&gt;
+?>

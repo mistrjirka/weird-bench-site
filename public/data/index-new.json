@@ -1,0 +1,92 @@
+{
+  "hardware": {
+    "cpus": [
+      {
+        "id": "amd-ryzen-7-5700x3d",
+        "name": "AMD Ryzen 7 5700X3D 8-Core Processor",
+        "manufacturer": "AMD",
+        "cores": 8,
+        "runs": [
+          {
+            "runId": "1758650425_amd-ryzen-7-5700x3d_amd-radeon-rx-7800-xt",
+            "timestamp": 1758650425,
+            "benchmarks": {
+              "7zip": ["runs/1758650425_amd-ryzen-7-5700x3d_amd-radeon-rx-7800-xt/7zip.json"],
+              "reversan": ["runs/1758650425_amd-ryzen-7-5700x3d_amd-radeon-rx-7800-xt/reversan.json"],
+              "llama": ["runs/1758650425_amd-ryzen-7-5700x3d_amd-radeon-rx-7800-xt/llama.json"],
+              "blender": ["runs/1758650425_amd-ryzen-7-5700x3d_amd-radeon-rx-7800-xt/blender.json"]
+            },
+            "associatedGpu": "amd-radeon-rx-7800-xt"
+          }
+        ],
+        "lastUpdated": 1758650425
+      },
+      {
+        "id": "amd-ryzen-ai-9-365",
+        "name": "AMD Ryzen AI 9 365 w/ Radeon 880M",
+        "manufacturer": "AMD",
+        "cores": 10,
+        "runs": [
+          {
+            "runId": "1758663639_amd-ryzen-ai-9-365",
+            "timestamp": 1758663639,
+            "benchmarks": {
+              "blender": ["runs/1758663639_amd-ryzen-ai-9-365/blender.json"],
+              "llama": ["runs/1758663639_amd-ryzen-ai-9-365/llama.json"],
+              "7zip": ["runs/1758663639_amd-ryzen-ai-9-365/7zip.json"],
+              "reversan": ["runs/1758663639_amd-ryzen-ai-9-365/reversan.json"]
+            },
+            "associatedGpu": "amd-radeon-880m"
+          }
+        ],
+        "lastUpdated": 1758663639
+      }
+    ],
+    "gpus": [
+      {
+        "id": "amd-radeon-rx-7800-xt",
+        "name": "AMD Radeon RX 7800 XT",
+        "manufacturer": "AMD",
+        "framework": "HIP",
+        "runs": [
+          {
+            "runId": "1758650425_amd-ryzen-7-5700x3d_amd-radeon-rx-7800-xt",
+            "timestamp": 1758650425,
+            "benchmarks": {
+              "llama": ["runs/1758650425_amd-ryzen-7-5700x3d_amd-radeon-rx-7800-xt/llama.json"],
+              "blender": ["runs/1758650425_amd-ryzen-7-5700x3d_amd-radeon-rx-7800-xt/blender.json"]
+            },
+            "associatedCpu": "amd-ryzen-7-5700x3d"
+          }
+        ],
+        "lastUpdated": 1758650425
+      },
+      {
+        "id": "amd-radeon-880m",
+        "name": "AMD Radeon 880M (Ryzen AI 9 365 iGPU)",
+        "manufacturer": "AMD",
+        "framework": "HIP",
+        "runs": [
+          {
+            "runId": "1758663639_amd-ryzen-ai-9-365",
+            "timestamp": 1758663639,
+            "benchmarks": {
+              "llama": ["runs/1758663639_amd-ryzen-ai-9-365/llama.json"],
+              "blender": ["runs/1758663639_amd-ryzen-ai-9-365/blender.json"]
+            },
+            "associatedCpu": "amd-ryzen-ai-9-365"
+          }
+        ],
+        "lastUpdated": 1758663639
+      }
+    ]
+  },
+  "metadata": {
+    "totalHardware": 3,
+    "totalRuns": 2,
+    "totalBenchmarks": 10,
+    "lastUpdated": 1758663639,
+    "version": "2.0",
+    "benchmarkTypes": ["7zip", "reversan", "llama", "blender"]
+  }
+}
