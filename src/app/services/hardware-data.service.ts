@@ -7,6 +7,7 @@ import {
   HardwareListResponse, 
   HardwareDetailResponse
 } from '../models/benchmark.models';
+import { environment } from '../../environments/environment';
 
 // Interface for the static index.json structure
 interface HardwareIndex {
@@ -39,7 +40,7 @@ interface IndexHardware {
   providedIn: 'root'
 })
 export class HardwareDataService {
-  private apiBaseUrl = '/api'; // Use proxy configuration
+  private apiBaseUrl = environment.apiUrl;
   
   // Reactive state management with signals
   private readonly _cpuList = signal<HardwareSummary[]>([]);

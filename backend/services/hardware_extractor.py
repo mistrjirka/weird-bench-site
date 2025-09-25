@@ -17,7 +17,7 @@ class HardwareExtractor:
             'intel': [r'intel.*graphics', r'iris', r'uhd.*graphics']
         }
 
-    async def extract_hardware_info(self, benchmark_data: Dict[str, Any], provided_hardware: Dict[str, Any]) -> StoredHardware:
+    async def extract_hardware_info(self, benchmark_data: Dict[str, Any], provided_hardware: Dict[str, Any]) -> List[StoredHardware]:
         """Extract hardware information from benchmark data and provided hardware info"""
         hardware_info = {
             'cpus': [],
@@ -44,35 +44,74 @@ class HardwareExtractor:
         primary_cpu = self._get_primary_hardware(hardware_info['cpus'], provided_hardware.get('cpu'))
         primary_gpu = self._get_primary_hardware(hardware_info['gpus'], provided_hardware.get('gpu'))
         
-        # Determine which hardware type this run belongs to
-        if primary_gpu and primary_gpu['name'].lower() != 'unknown':
-            hardware_type = 'gpu'
-            hardware_name = primary_gpu['name']
-            manufacturer = primary_gpu.get('manufacturer', 'Unknown')
-            framework = primary_gpu.get('framework')
-            cores = None
-        else:
-            hardware_type = 'cpu'
-            hardware_name = primary_cpu['name']
-            manufacturer = primary_cpu.get('manufacturer', 'Unknown')
-            framework = None
-            cores = primary_cpu.get('cores')
+        hardware_entries = []
         
-        # Generate hardware ID
-        hardware_id = self._generate_hardware_id(hardware_name)
+        # Create CPU hardware entry if we have CPU benchmarks
+        cpu_benchmarks = [bt for bt in benchmark_data.keys() if bt in ['7zip', 'reversan'] or (bt == 'llama' and benchmark_data[bt].get('runs_cpu'))]
+        if cpu_benchmarks and primary_cpu:
+            cpu_id = self._generate_hardware_id(primary_cpu['name'])
+            hardware_entries.append(StoredHardware(
+                id=cpu_id,
+                name=primary_cpu['name'],
+                manufacturer=primary_cpu.get('manufacturer', 'Unknown'),
+                type='cpu',
+                cores=primary_cpu.get('cores'),
+                framework=None,
+                directory_path=f"cpu/{cpu_id}",
+                benchmark_runs=[],
+                created_at=0,  # Will be set by storage manager
+                updated_at=0   # Will be set by storage manager
+            ))
         
-        return StoredHardware(
-            id=hardware_id,
-            name=hardware_name,
-            manufacturer=manufacturer,
-            type=hardware_type,
-            cores=cores,
-            framework=framework,
-            directory_path=f"{hardware_type}/{hardware_id}",
-            benchmark_runs=[],
-            created_at=0,  # Will be set by storage manager
-            updated_at=0   # Will be set by storage manager
-        )
+        # Create GPU hardware entry if we have GPU benchmarks and valid GPU
+        gpu_benchmarks = [bt for bt in benchmark_data.keys() if bt in ['blender'] or (bt == 'llama' and benchmark_data[bt].get('runs_gpu'))]
+        if gpu_benchmarks and primary_gpu and primary_gpu['name'].lower() != 'unknown':
+            gpu_id = self._generate_hardware_id(primary_gpu['name'])
+            hardware_entries.append(StoredHardware(
+                id=gpu_id,
+                name=primary_gpu['name'],
+                manufacturer=primary_gpu.get('manufacturer', 'Unknown'),
+                type='gpu',
+                cores=None,
+                framework=primary_gpu.get('framework'),
+                directory_path=f"gpu/{gpu_id}",
+                benchmark_runs=[],
+                created_at=0,  # Will be set by storage manager
+                updated_at=0   # Will be set by storage manager
+            ))
+        
+        # Fallback: if no specific benchmarks found, create based on detected hardware
+        if not hardware_entries:
+            if primary_gpu and primary_gpu['name'].lower() != 'unknown':
+                gpu_id = self._generate_hardware_id(primary_gpu['name'])
+                hardware_entries.append(StoredHardware(
+                    id=gpu_id,
+                    name=primary_gpu['name'],
+                    manufacturer=primary_gpu.get('manufacturer', 'Unknown'),
+                    type='gpu',
+                    cores=None,
+                    framework=primary_gpu.get('framework'),
+                    directory_path=f"gpu/{gpu_id}",
+                    benchmark_runs=[],
+                    created_at=0,
+                    updated_at=0
+                ))
+            else:
+                cpu_id = self._generate_hardware_id(primary_cpu['name'])
+                hardware_entries.append(StoredHardware(
+                    id=cpu_id,
+                    name=primary_cpu['name'],
+                    manufacturer=primary_cpu.get('manufacturer', 'Unknown'),
+                    type='cpu',
+                    cores=primary_cpu.get('cores'),
+                    framework=None,
+                    directory_path=f"cpu/{cpu_id}",
+                    benchmark_runs=[],
+                    created_at=0,
+                    updated_at=0
+                ))
+        
+        return hardware_entries
 
     def _extract_from_blender(self, data: Dict[str, Any], hardware_info: Dict[str, Any]) -> None:
         """Extract hardware info from Blender benchmark data"""

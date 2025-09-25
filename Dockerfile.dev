@@ -1,17 +1,4 @@
-# Multi-stage build for Python backend and Angular frontend (PRODUCTION)
-FROM docker.io/node:20-alpine AS frontend-builder
-
-# Build Angular frontend
-WORKDIR /app/frontend
-COPY src/ ./src/
-COPY package*.json ./
-COPY angular.json ./
-COPY tsconfig*.json ./
-
-RUN npm ci
-RUN npm run build --configuration=production
-
-# Python backend stage
+# Development Dockerfile for Python backend only
 FROM docker.io/python:3.11-slim
 
 # Install system dependencies
@@ -31,9 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./backend/
 COPY schemas/ ./schemas/
 
-# Copy built frontend from previous stage
-COPY --from=frontend-builder /app/frontend/dist/weird-bench-site/browser/ ./static/
-
 # Create data directory
 RUN mkdir -p /app/data
 
@@ -51,4 +35,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
 
 # Run the application
-CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

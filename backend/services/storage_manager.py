@@ -105,78 +105,83 @@ class StorageManager:
                 lastUpdated=int(hardware.updated_at.timestamp())
             )
 
-    async def store_benchmark_run(self, run_id: str, hardware_info: StoredHardware, benchmark_data: Dict[str, Any], timestamp: int) -> UploadResult:
-        """Store a complete benchmark run"""
+    async def store_benchmark_run(self, run_id: str, hardware_entries: List[StoredHardware], benchmark_data: Dict[str, Any], timestamp: int) -> UploadResult:
+        """Store a complete benchmark run for multiple hardware entries"""
         async with database.get_session() as session:
-            # Get or create hardware entry
-            result = await session.execute(
-                select(Hardware).where(Hardware.id == hardware_info.id)
-            )
-            hardware = result.scalar_one_or_none()
-            
-            if not hardware:
-                hardware = Hardware(
-                    id=hardware_info.id,
-                    name=hardware_info.name,
-                    manufacturer=hardware_info.manufacturer,
-                    type=hardware_info.type,
-                    cores=hardware_info.cores,
-                    framework=hardware_info.framework
-                )
-                session.add(hardware)
-                await session.flush()  # Get the ID
-            
-            # Get next run number for this hardware
-            run_number_result = await session.execute(
-                select(func.max(BenchmarkRun.run_number))
-                .where(BenchmarkRun.hardware_id == hardware.id)
-            )
-            max_run = run_number_result.scalar() or 0
-            run_number = max_run + 1
-            
-            # Create benchmark run
-            benchmark_run = BenchmarkRun(
-                run_id=run_id,
-                hardware_id=hardware.id,
-                timestamp=datetime.fromtimestamp(timestamp),
-                run_number=run_number
-            )
-            session.add(benchmark_run)
-            await session.flush()  # Get the ID
-            
-            # Separate CPU and GPU benchmarks based on hardware type and benchmark content
             stored_benchmarks = []
+            all_hardware_ids = []
             
-            for benchmark_type, data in benchmark_data.items():
-                if self._should_store_for_hardware_type(benchmark_type, hardware_info.type, data):
-                    # Create file path
-                    file_path = f"{hardware_info.type}/{hardware_info.id}/run_{run_number}_{benchmark_type}.json"
-                    full_path = self.data_dir / file_path
-                    
-                    # Ensure directory exists
-                    full_path.parent.mkdir(parents=True, exist_ok=True)
-                    
-                    # Write JSON file
-                    with open(full_path, 'w') as f:
-                        json.dump(data, f, indent=2)
-                    
-                    # Create database entry
-                    benchmark_file = BenchmarkFile(
-                        benchmark_run_id=benchmark_run.id,
-                        benchmark_type=benchmark_type,
-                        filename=f"run_{run_number}_{benchmark_type}.json",
-                        file_path=file_path,
-                        file_size=full_path.stat().st_size,
-                        data=data
+            # Process each hardware entry (CPU and/or GPU)
+            for hardware_info in hardware_entries:
+                # Get or create hardware entry
+                result = await session.execute(
+                    select(Hardware).where(Hardware.id == hardware_info.id)
+                )
+                hardware = result.scalar_one_or_none()
+                
+                if not hardware:
+                    hardware = Hardware(
+                        id=hardware_info.id,
+                        name=hardware_info.name,
+                        manufacturer=hardware_info.manufacturer,
+                        type=hardware_info.type,
+                        cores=hardware_info.cores,
+                        framework=hardware_info.framework
                     )
-                    session.add(benchmark_file)
-                    stored_benchmarks.append(benchmark_type)
+                    session.add(hardware)
+                    await session.flush()  # Get the ID
+                
+                all_hardware_ids.append(hardware.id)
+                
+                # Get next run number for this hardware
+                run_number_result = await session.execute(
+                    select(func.max(BenchmarkRun.run_number))
+                    .where(BenchmarkRun.hardware_id == hardware.id)
+                )
+                max_run = run_number_result.scalar() or 0
+                run_number = max_run + 1
+                
+                # Create benchmark run
+                benchmark_run = BenchmarkRun(
+                    run_id=run_id,
+                    hardware_id=hardware.id,
+                    timestamp=datetime.fromtimestamp(timestamp),
+                    run_number=run_number
+                )
+                session.add(benchmark_run)
+                await session.flush()  # Get the ID
+                
+                # Store benchmarks appropriate for this hardware type
+                for benchmark_type, data in benchmark_data.items():
+                    if self._should_store_for_hardware_type(benchmark_type, hardware_info.type, data):
+                        # Create file path
+                        file_path = f"{hardware_info.type}/{hardware_info.id}/run_{run_number}_{benchmark_type}.json"
+                        full_path = self.data_dir / file_path
+                        
+                        # Ensure directory exists
+                        full_path.parent.mkdir(parents=True, exist_ok=True)
+                        
+                        # Write JSON file
+                        with open(full_path, 'w') as f:
+                            json.dump(data, f, indent=2)
+                        
+                        # Create database entry
+                        benchmark_file = BenchmarkFile(
+                            benchmark_run_id=benchmark_run.id,
+                            benchmark_type=benchmark_type,
+                            filename=f"run_{run_number}_{benchmark_type}.json",
+                            file_path=file_path,
+                            file_size=full_path.stat().st_size,
+                            data=data
+                        )
+                        session.add(benchmark_file)
+                        stored_benchmarks.append(f"{hardware_info.type}:{benchmark_type}")
             
             await session.commit()
             
             return UploadResult(
-                hardware_id=hardware.id,
-                hardware_type=hardware.type,
+                hardware_id=all_hardware_ids[0] if all_hardware_ids else "",  # Primary hardware ID
+                hardware_type="mixed" if len(hardware_entries) > 1 else hardware_entries[0].type,
                 stored_benchmarks=stored_benchmarks,
                 run_id=run_id
             )

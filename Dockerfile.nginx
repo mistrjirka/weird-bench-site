@@ -1,17 +1,21 @@
-# Simple nginx Dockerfile for production
-FROM ubuntu:22.04
+# Nginx Dockerfile with built Angular frontend
+FROM docker.io/node:20-alpine AS frontend-builder
 
-# Install nginx
-RUN apt-get update && \
-    apt-get install -y nginx && \
-    rm -rf /var/lib/apt/lists/* && \
-    # Create nginx user and group
-    mkdir -p /var/cache/nginx/client_temp && \
-    mkdir -p /var/cache/nginx/proxy_temp && \
-    mkdir -p /var/cache/nginx/fastcgi_temp && \
-    mkdir -p /var/cache/nginx/uwsgi_temp && \
-    mkdir -p /var/cache/nginx/scgi_temp && \
-    chown -R www-data:www-data /var/cache/nginx
+# Build Angular frontend
+WORKDIR /app/frontend
+COPY src/ ./src/
+COPY package*.json ./
+COPY angular.json ./
+COPY tsconfig*.json ./
+
+RUN npm ci
+RUN npm run build --configuration=production
+
+# Nginx stage
+FROM docker.io/nginx:alpine
+
+# Copy built Angular frontend to nginx html directory
+COPY --from=frontend-builder /app/frontend/dist/weird-bench-site/browser/ /usr/share/nginx/html/
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf

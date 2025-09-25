@@ -1,8 +1,9 @@
 services:
+  # Python backend API with precompiled frontend
   weird-bench-api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile  # Production multi-stage build
     expose:
       - "8000"  # Internal port only, not exposed to host
     volumes:
@@ -26,12 +27,14 @@ services:
 
   # Nginx reverse proxy to serve both frontend and API
   nginx:
-    # Use the simple nginx image to avoid authentication issues
-    image: docker.io/nginx:alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
     ports:
-      - "8090:80"
+      - "8000:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # Mount data directory for persistence
+      - ./data:/app/data
     depends_on:
       - weird-bench-api
     restart: unless-stopped

@@ -1,12 +1,36 @@
 
 services:
+  # Angular development server
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.dev
+    ports:
+      - "4200:4200"  # Direct access to Angular dev server
+    volumes:
+      # Mount source code for hot reloading
+      - ./src:/app/src:ro
+      - ./package.json:/app/package.json:ro
+      - ./angular.json:/app/angular.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./tsconfig.app.json:/app/tsconfig.app.json:ro
+      - ./tsconfig.spec.json:/app/tsconfig.spec.json:ro
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    networks:
+      - backend
+
+  # Python backend API
   weird-bench-api:
     build:
       context: .
-      dockerfile: Dockerfile
-    expose:
-      - "8000"  # Internal port only, not exposed to host
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"  # Direct access to API for development
     volumes:
+      # Mount backend code for hot reloading
+      - ./backend:/app/backend:ro
       # Mount data directory for persistence
       - ./data:/app/data
       # Mount schemas directory
@@ -22,19 +46,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - backend
-
-  # Nginx reverse proxy to serve both frontend and API
-  nginx:
-    image: docker.io/nginx:alpine
-    ports:
-      - "8090:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - weird-bench-api
-    restart: unless-stopped
     networks:
       - backend
 

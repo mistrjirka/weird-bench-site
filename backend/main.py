@@ -200,13 +200,13 @@ async def upload_benchmark(request: Request):
             raise HTTPException(status_code=400, detail="No valid benchmark JSON files found")
         
         # Extract hardware information and store data
-        extracted_hardware = await hardware_extractor.extract_hardware_info(
+        extracted_hardware_list = await hardware_extractor.extract_hardware_info(
             benchmark_results, hardware_data
         )
         
         # Store the benchmark run
         result = await storage_manager.store_benchmark_run(
-            run_id, extracted_hardware, benchmark_results, int(timestamp)
+            run_id, extracted_hardware_list, benchmark_results, int(timestamp)
         )
         
         return UploadResponse(
@@ -245,7 +245,24 @@ async def legacy_api_compatibility(request):
     )
 
 # Serve static files (Angular frontend) - this will be handled by nginx in production
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# Only mount static files if the directory exists (for production builds)
+import os
+if os.path.exists("static"):
+    app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
+# Catch-all route for Angular SPA routing - this must be after static files mount
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str, request: Request):
+    """Catch-all route to serve Angular index.html for SPA routing"""
+    # If it's an API route that wasn't matched, return 404
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+    
+    # For all other routes, serve the Angular index.html
+    if os.path.exists("static"):
+        return FileResponse("static/index.html")
+    else:
+        raise HTTPException(status_code=404, detail="Frontend not built")
 
 if __name__ == "__main__":
     import uvicorn
