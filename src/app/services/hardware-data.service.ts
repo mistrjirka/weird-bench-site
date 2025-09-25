@@ -81,10 +81,10 @@ export class HardwareDataService {
     this._isLoading.set(true);
     this._error.set(null);
 
-    return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware`).pipe(
+    return this.http.get<any>(`${this.apiBaseUrl}/hardware`).pipe(
       map(response => {
         // Convert API response to HardwareSummary format
-        const hardwareData = response.data?.hardware || response.hardware || {};
+        const hardwareData = response.data || {};
         
         // Process CPUs
         const cpus: HardwareSummary[] = (hardwareData.cpus || []).map((hw: any) => ({
@@ -149,24 +149,22 @@ export class HardwareDataService {
     this._isLoading.set(true);
     this._error.set(null);
 
-    return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware-detail&type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
+    return this.http.get<any>(`${this.apiBaseUrl}/hardware-detail?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
       map(response => {
         const hardwareData = response.data;
-        if (!hardwareData || !hardwareData.hardware) {
+        if (!hardwareData) {
           console.log('Hardware detail response:', response);
           throw new Error(`Hardware ${type}/${id} not found`);
         }
 
-        const hardware = hardwareData.hardware;
-        
         // Create the base hardware info
         const hardwareInfo: HardwareInfo = {
-          id: hardware.id,
-          name: hardware.name,
-          type: hardware.type || type,
-          manufacturer: hardware.manufacturer,
-          ...(hardware.cores ? { cores: hardware.cores } : {}),
-          ...(hardware.framework ? { framework: hardware.framework } : {})
+          id: hardwareData.id,
+          name: hardwareData.name,
+          type: hardwareData.type || type,
+          manufacturer: hardwareData.manufacturer,
+          ...(hardwareData.cores ? { cores: hardwareData.cores } : {}),
+          ...(hardwareData.framework ? { framework: hardwareData.framework } : {})
         };
 
         this._isLoading.set(false);
@@ -197,7 +195,7 @@ export class HardwareDataService {
    * Load specific benchmark file for hardware - gets data directly from API
    */
   loadBenchmarkFile(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any> {
-    return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware-detail&type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
+    return this.http.get<any>(`${this.apiBaseUrl}/hardware-detail?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
       map(response => {
         const benchmarkFiles = response.data?.benchmarkFiles || [];
         if (!benchmarkFiles || !Array.isArray(benchmarkFiles)) return null;
@@ -214,7 +212,7 @@ export class HardwareDataService {
   }
 
   loadBenchmarkFiles(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any[]> {
-    return this.http.get<any>(`${this.apiBaseUrl}/api.php?action=hardware-detail&type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
+    return this.http.get<any>(`${this.apiBaseUrl}/hardware-detail?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
       map(response => {
         const benchmarkFiles = response.data?.benchmarkFiles || [];
         if (!benchmarkFiles || !Array.isArray(benchmarkFiles)) return [];

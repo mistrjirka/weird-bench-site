@@ -1,6 +1,4 @@
 
-version: '3.8'
-
 services:
   weird-bench-api:
     build:
@@ -29,9 +27,9 @@ services:
 
   # Nginx reverse proxy to serve both frontend and API
   nginx:
-    image: nginx:alpine
+    image: docker.io/nginx:alpine
     ports:
-      - "8000:80"
+      - "8090:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:

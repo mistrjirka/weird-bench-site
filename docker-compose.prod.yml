@@ -1,0 +1,47 @@
+services:
+  weird-bench-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8000"  # Internal port only, not exposed to host
+    volumes:
+      # Mount data directory for persistence
+      - ./data:/app/data
+      # Mount schemas directory
+      - ./schemas:/app/schemas:ro
+    environment:
+      - DATA_DIR=/app/data
+      - DATABASE_URL=sqlite+aiosqlite:///app/data/benchmarks.db
+      - PYTHONPATH=/app/backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - backend
+
+  # Nginx reverse proxy to serve both frontend and API
+  nginx:
+    # Use the simple nginx image to avoid authentication issues
+    image: docker.io/nginx:alpine
+    ports:
+      - "8090:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - weird-bench-api
+    restart: unless-stopped
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  data:
+    driver: local

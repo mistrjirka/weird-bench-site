@@ -1,5 +1,5 @@
 # Multi-stage build for Python backend and Angular frontend
-FROM node:20-alpine AS frontend-builder
+FROM docker.io/node:20-alpine AS frontend-builder
 
 # Build Angular frontend
 WORKDIR /app/frontend
@@ -12,7 +12,7 @@ RUN npm ci
 RUN npm run build
 
 # Python backend stage
-FROM python:3.11-slim
+FROM docker.io/python:3.11-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -32,7 +32,7 @@ COPY backend/ ./backend/
 COPY schemas/ ./schemas/
 
 # Copy built frontend from previous stage
-COPY --from=frontend-builder /app/frontend/dist/ ./static/
+COPY --from=frontend-builder /app/frontend/dist/weird-bench-site/browser/ ./static/
 
 # Create data directory
 RUN mkdir -p /app/data
