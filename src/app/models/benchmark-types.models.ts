@@ -34,7 +34,6 @@ export interface ReversanResult {
     host: string;
     platform: string;
     timestamp: number;
-    gnu_time?: boolean;
     repo?: string;
     test_runs_per_config?: number;
   };

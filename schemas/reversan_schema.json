@@ -31,9 +31,6 @@
             "timestamp": {
               "type": "number"
             },
-            "gnu_time": {
-              "type": "boolean"
-            },
             "repo": {
               "type": "string"
             },

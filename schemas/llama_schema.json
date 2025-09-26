@@ -10,9 +10,8 @@
     "timestamp": {
       "type": "number"
     },
-    "results": {
+        "results": {
       "type": "object",
-      "required": ["meta", "build"],
       "properties": {
         "meta": {
           "type": "object",
