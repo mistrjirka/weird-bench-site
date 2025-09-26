@@ -227,6 +227,76 @@ class StorageManager:
         else:
             return sorted_values[n//2]
 
+    def _gpu_names_match(self, gpu_name: str, hardware_name: str) -> bool:
+        """Check if two GPU names match with normalization for common variations"""
+        if not gpu_name or not hardware_name:
+            return False
+        
+        # Handle comma-separated GPU lists in gpu_name (like "RTX 3060 Ti, RTX 3060")
+        if ',' in gpu_name:
+            gpu_names = [name.strip() for name in gpu_name.split(',')]
+            return any(self._gpu_names_match_single(single_gpu, hardware_name) for single_gpu in gpu_names)
+        
+        return self._gpu_names_match_single(gpu_name, hardware_name)
+    
+    def _gpu_names_match_single(self, gpu_name: str, hardware_name: str) -> bool:
+        """Check if two single GPU names match with fuzzy matching"""
+        if not gpu_name or not hardware_name:
+            return False
+        
+        def normalize_gpu_name(name: str) -> str:
+            """Normalize GPU name for comparison"""
+            # Convert to lowercase and remove common prefixes/suffixes
+            name = name.lower().strip()
+            
+            # Remove common manufacturer prefixes
+            for prefix in ['nvidia ', 'amd ', 'intel ', 'geforce ', 'radeon ', 'arc ']:
+                if name.startswith(prefix):
+                    name = name[len(prefix):]
+            
+            # Remove common suffixes and variations
+            for suffix in [' ti', ' xt', ' super', ' founders edition', ' fe']:
+                if name.endswith(suffix):
+                    name = name[:-len(suffix)]
+            
+            # Remove extra whitespace and special characters
+            name = ' '.join(name.split())
+            name = name.replace('-', ' ').replace('_', ' ')
+            
+            return name
+        
+        def extract_key_parts(name: str) -> set:
+            """Extract key identifying parts from GPU name"""
+            parts = normalize_gpu_name(name).split()
+            # Keep important parts like RTX, 3060, etc.
+            key_parts = set()
+            for part in parts:
+                if part.isdigit() or part.isalnum():  # Keep model numbers and identifiers
+                    key_parts.add(part)
+            return key_parts
+        
+        normalized_gpu = normalize_gpu_name(gpu_name)
+        normalized_hardware = normalize_gpu_name(hardware_name)
+        
+        # Direct match
+        if normalized_gpu == normalized_hardware:
+            return True
+        
+        # Check if one is contained in the other
+        if normalized_gpu in normalized_hardware or normalized_hardware in normalized_gpu:
+            return True
+        
+        # Fuzzy match based on key parts (model numbers, etc.)
+        gpu_parts = extract_key_parts(gpu_name)
+        hardware_parts = extract_key_parts(hardware_name)
+        
+        # If they share significant key parts, consider it a match
+        common_parts = gpu_parts & hardware_parts
+        if common_parts and len(common_parts) >= min(2, len(gpu_parts), len(hardware_parts)):
+            return True
+        
+        return False
+
     def _process_llama_data(self, data_list: List[Dict], hardware_type: str, hardware_name: str) -> ProcessedBenchmarkData:
         """Process Llama benchmark data"""
         all_runs = []
@@ -779,11 +849,22 @@ class StorageManager:
             if 'device_runs' in actual_data:
                 filtered_runs = []
                 for run in actual_data['device_runs']:
-                    device_name = run.get('device_name')
-                    framework = run.get('device_framework')
-                    if device_name and framework and framework != 'CPU':
-                        if self._gpu_names_match(device_name, hardware_name):
-                            filtered_runs.append(run)
+                    device_name = run.get('device_name', '')
+                    # Also check device_framework for GPU types (OPTIX, CUDA, etc.) and extract device name from raw_json
+                    if not device_name and run.get('raw_json'):
+                        # Extract device name from raw_json system_info
+                        for scene_data in run['raw_json']:
+                            if isinstance(scene_data, dict) and 'system_info' in scene_data:
+                                devices = scene_data['system_info'].get('devices', [])
+                                for device in devices:
+                                    if device.get('type') in ['OPTIX', 'CUDA', 'HIP', 'OPENCL']:
+                                        device_name = device.get('name', '')
+                                        break
+                                if device_name:
+                                    break
+                    
+                    if device_name and self._gpu_names_match(device_name, hardware_name):
+                        filtered_runs.append(run)
                 actual_data['device_runs'] = filtered_runs
         
         return filtered_data
