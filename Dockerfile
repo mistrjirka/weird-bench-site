@@ -1,17 +1,4 @@
-# Multi-stage build for Python backend and Angular frontend (PRODUCTION)
-FROM docker.io/node:20-alpine AS frontend-builder
-
-# Build Angular frontend
-WORKDIR /app/frontend
-COPY src/ ./src/
-COPY package*.json ./
-COPY angular.json ./
-COPY tsconfig*.json ./
-
-RUN npm ci
-RUN npm install -g @angular/cli
-RUN npm run build --configuration=production
-
+# Multi-stage build for Python backend (PRODUCTION)
 # Python backend stage
 FROM docker.io/python:3.11-slim
 
@@ -31,9 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend code
 COPY backend/ ./backend/
 COPY schemas/ ./schemas/
-
-# Copy built frontend from previous stage
-COPY --from=frontend-builder /app/frontend/dist/weird-bench-site/browser/ ./static/
 
 # Create data directory
 RUN mkdir -p /app/data
