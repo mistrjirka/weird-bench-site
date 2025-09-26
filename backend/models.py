@@ -53,6 +53,7 @@ class ProcessedBenchmarkData(BaseModel):
     stats: Dict[str, Any]
     file_count: int
     valid_file_count: int
+    device_runs: Optional[List[Dict[str, Any]]] = None  # For backward compatibility
 
 class HardwareDetailResponse(BaseModel):
     success: bool = True

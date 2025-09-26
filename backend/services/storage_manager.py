@@ -350,6 +350,7 @@ class StorageManager:
 
         # Process individual scene results from raw_json
         scene_results = {}
+        scene_timings = {}
         device_info = {}
         
         for run in all_runs:
@@ -373,20 +374,29 @@ class StorageManager:
                 scene_label = scene_data.get("scene", {}).get("label", "unknown")
                 stats = scene_data.get("stats", {})
                 samples_per_minute = stats.get("samples_per_minute")
+                time_for_samples = stats.get("time_for_samples")
+                total_render_time = stats.get("total_render_time")
                 
                 if samples_per_minute is not None:
                     scene_key = f"{device_key}_{scene_label}"
                     if scene_key not in scene_results:
                         scene_results[scene_key] = []
+                        scene_timings[scene_key] = []
                     scene_results[scene_key].append(samples_per_minute)
+                    # Store timing info (prefer total_render_time, fallback to time_for_samples)
+                    timing = total_render_time if total_render_time is not None else time_for_samples
+                    scene_timings[scene_key].append(timing)
 
         # Create data points for each scene
         processed_groups = []
+        device_runs_data = []
+        
         for scene_key, spm_values in scene_results.items():
             parts = scene_key.split("_", 2)  # Split into device_key and scene
             if len(parts) >= 3:
                 device_key = f"{parts[0]}_{parts[1]}"
                 scene = parts[2]
+                timing_values = scene_timings.get(scene_key, [])
                 
                 group_data = {
                     "group": scene_key,
@@ -394,11 +404,22 @@ class StorageManager:
                     "scene": scene,
                     "run_count": len(spm_values),
                     "samples_per_minute_median": self._calculate_median(spm_values),
-                    "samples_per_minute_values": spm_values
+                    "samples_per_minute_values": spm_values,
+                    "elapsed_seconds_median": self._calculate_median(timing_values) if timing_values else None,
+                    "elapsed_seconds_values": timing_values
                 }
                 processed_groups.append(group_data)
+                
+                # Create device_runs entry for backward compatibility
+                device_runs_data.append({
+                    "scene_name": scene,
+                    "device_name": device_key,
+                    "elapsed_seconds": self._calculate_median(timing_values) if timing_values else None,
+                    "samples_per_minute": self._calculate_median(spm_values),
+                    "run_count": len(spm_values)
+                })
 
-        return ProcessedBenchmarkData(
+        result = ProcessedBenchmarkData(
             benchmark_type="blender",
             hardware_type=hardware_type,
             data_points=processed_groups,
@@ -409,8 +430,11 @@ class StorageManager:
                 "scenes_tested": list(scenes_tested)
             },
             file_count=len(data_list),
-            valid_file_count=len(data_list)
+            valid_file_count=len(data_list),
+            device_runs=device_runs_data  # Use the field properly
         )
+        
+        return result
 
     def _process_7zip_data(self, data_list: List[Dict], hardware_type: str) -> ProcessedBenchmarkData:
         """Process 7zip benchmark data"""

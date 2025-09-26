@@ -249,13 +249,23 @@ export class HardwareDetail implements OnInit {
     const sceneScores: any[] = [];
     let deviceName = null;
     let framework = null;
+    let totalElapsedTime = 0;
+    let hasValidTimes = false;
     
     for (const point of dataPoints) {
+      const elapsedTime = point.elapsed_seconds_median;
       sceneScores.push({
         scene: point.scene,
         samplesPerMinute: point.samples_per_minute_median,
+        elapsedSeconds: elapsedTime,
         runCount: point.run_count
       });
+      
+      // Accumulate total time if available
+      if (elapsedTime && typeof elapsedTime === 'number') {
+        totalElapsedTime += elapsedTime;
+        hasValidTimes = true;
+      }
       
       // Get device info from first point
       if (!deviceName && point.device) {
@@ -267,10 +277,6 @@ export class HardwareDetail implements OnInit {
       }
     }
     
-    // Calculate overall score as median of scene medians
-    const sceneMedians = sceneScores.map(s => s.samplesPerMinute).filter(s => typeof s === 'number');
-    const totalScore = this.hardwareService.median(sceneMedians);
-    
     // Get scenes count from stats
     const scenesCount = data.stats?.scenes || sceneScores.length;
 
@@ -278,9 +284,9 @@ export class HardwareDetail implements OnInit {
       deviceName: deviceName,
       framework: framework,
       scenesCount: scenesCount,
-      elapsedSeconds: null, // Not available in new structure
-      totalScore: totalScore,
-      sceneScores: sceneScores
+      elapsedSeconds: hasValidTimes ? totalElapsedTime : null,
+      sceneScores: sceneScores,
+      // Remove totalScore - it doesn't make sense for Blender which has scene-specific scores
     };
   }
 

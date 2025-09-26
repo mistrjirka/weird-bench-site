@@ -47,15 +47,23 @@ class HardwareExtractor:
         hardware_entries = []
 
         # Create CPU hardware entry if we have CPU benchmarks (include Blender CPU device runs)
-        cpu_benchmarks = [
-            bt for bt in benchmark_data.keys()
-            if bt in ['7zip', 'reversan']
-            or (bt == 'llama' and benchmark_data[bt].get('runs_cpu'))
-            or (bt == 'blender' and any(
-                (dr or {}).get('device_framework') == 'CPU'
-                for dr in (benchmark_data[bt].get('device_runs') or [])
-            ))
-        ]
+        cpu_benchmarks = []
+        for bt in benchmark_data.keys():
+            if bt in ['7zip', 'reversan']:
+                cpu_benchmarks.append(bt)
+            elif bt == 'llama':
+                # Handle wrapped data structure
+                data = benchmark_data[bt]
+                actual_data = data.get('results', data) if 'results' in data else data
+                if actual_data.get('runs_cpu'):
+                    cpu_benchmarks.append(bt)
+            elif bt == 'blender':
+                # Handle wrapped data structure
+                data = benchmark_data[bt]
+                actual_data = data.get('results', data) if 'results' in data else data
+                device_runs = actual_data.get('device_runs') or []
+                if any((dr or {}).get('device_framework') == 'CPU' for dr in device_runs):
+                    cpu_benchmarks.append(bt)
         if cpu_benchmarks and primary_cpu:
             cpu_id = self._generate_hardware_id(primary_cpu['name'])
             hardware_entries.append(StoredHardware(
@@ -72,7 +80,16 @@ class HardwareExtractor:
             ))
         
         # Create GPU hardware entry if we have GPU benchmarks and valid GPU
-        gpu_benchmarks = [bt for bt in benchmark_data.keys() if bt in ['blender'] or (bt == 'llama' and benchmark_data[bt].get('runs_gpu'))]
+        gpu_benchmarks = []
+        for bt in benchmark_data.keys():
+            if bt == 'blender':
+                gpu_benchmarks.append(bt)  # Blender always has potential for GPU
+            elif bt == 'llama':
+                # Handle wrapped data structure
+                data = benchmark_data[bt]
+                actual_data = data.get('results', data) if 'results' in data else data
+                if actual_data.get('runs_gpu'):
+                    gpu_benchmarks.append(bt)
         if gpu_benchmarks and primary_gpu and isinstance(primary_gpu.get('name'), str) and primary_gpu['name'].lower() != 'unknown':
             gpu_id = self._generate_hardware_id(primary_gpu['name'])
             hardware_entries.append(StoredHardware(
@@ -123,10 +140,13 @@ class HardwareExtractor:
 
     def _extract_from_blender(self, data: Dict[str, Any], hardware_info: Dict[str, Any]) -> None:
         """Extract hardware info from Blender benchmark data"""
-        if not data.get('device_runs'):
+        # Handle wrapped data structure - extract from 'results' if present
+        actual_data = data.get('results', data) if 'results' in data else data
+        
+        if not actual_data.get('device_runs'):
             return
             
-        for device_run in data['device_runs']:
+        for device_run in actual_data['device_runs']:
             # Extract from device_name (old format)
             if 'device_name' in device_run:
                 device_name = str(device_run['device_name'])
@@ -181,8 +201,11 @@ class HardwareExtractor:
 
     def _extract_from_llama(self, data: Dict[str, Any], hardware_info: Dict[str, Any]) -> None:
         """Extract hardware info from Llama benchmark data"""
-        if data.get('runs_cpu'):
-            for run in data['runs_cpu']:
+        # Handle wrapped data structure - extract from 'results' if present
+        actual_data = data.get('results', data) if 'results' in data else data
+        
+        if actual_data.get('runs_cpu'):
+            for run in actual_data['runs_cpu']:
                 cpu_info = run.get('metrics', {}).get('system_info', {}).get('cpu_info')
                 if cpu_info:
                     cpu = self._normalize_cpu_info(cpu_info)
@@ -190,8 +213,8 @@ class HardwareExtractor:
                         hardware_info['cpus'].append(cpu)
                     break
         
-        if data.get('runs_gpu'):
-            for run in data['runs_gpu']:
+        if actual_data.get('runs_gpu'):
+            for run in actual_data['runs_gpu']:
                 gpu_info = run.get('metrics', {}).get('system_info', {}).get('gpu_info')
                 if gpu_info:
                     gpu = self._normalize_gpu_info(gpu_info)
@@ -201,7 +224,10 @@ class HardwareExtractor:
 
     def _extract_from_7zip(self, data: Dict[str, Any], hardware_info: Dict[str, Any]) -> None:
         """Extract hardware info from 7zip benchmark data"""
-        system_info = data.get('system_info', {})
+        # Handle wrapped data structure - extract from 'results' if present
+        actual_data = data.get('results', data) if 'results' in data else data
+        
+        system_info = actual_data.get('system_info', {})
         
         if 'cpu' in system_info:
             cpu = self._normalize_cpu_info(system_info['cpu'])
@@ -216,6 +242,8 @@ class HardwareExtractor:
 
     def _extract_from_reversan(self, data: Dict[str, Any], hardware_info: Dict[str, Any]) -> None:
         """Extract hardware info from Reversan benchmark data"""
+        # Handle wrapped data structure - extract from 'results' if present
+        actual_data = data.get('results', data) if 'results' in data else data
         # Reversan typically doesn't contain hardware info
         pass
 
@@ -268,7 +296,23 @@ class HardwareExtractor:
             return False
         
         device_name_lower = device_name.lower()
-        cpu_keywords = ['cpu', 'processor', 'intel', 'amd', 'ryzen', 'xeon']
+        
+        # Strong CPU indicators (these override GPU keywords)
+        strong_cpu_keywords = ['ryzen', 'xeon', 'celeron', 'pentium', 'threadripper', 'epyc']
+        if any(keyword in device_name_lower for keyword in strong_cpu_keywords):
+            return True
+        
+        # Strong GPU indicators
+        gpu_keywords = ['radeon graphics', 'geforce', 'gtx', 'rtx', 'quadro', 'tesla']
+        if any(keyword in device_name_lower for keyword in gpu_keywords):
+            return False
+        
+        # Generic keywords that could be either - use context
+        if 'graphics' in device_name_lower or 'gpu' in device_name_lower:
+            return False
+        
+        # Fallback CPU keywords
+        cpu_keywords = ['cpu', 'processor', 'intel', 'amd']
         return any(keyword in device_name_lower for keyword in cpu_keywords)
 
     def _detect_cpu_manufacturer(self, cpu_name: str) -> str:
