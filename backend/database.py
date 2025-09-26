@@ -100,8 +100,13 @@ class Database:
             )
             
             # Create tables
-            async with self.engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
+            try:
+                async with self.engine.begin() as conn:
+                    await conn.run_sync(Base.metadata.create_all)
+                print(f"✅ Database tables created successfully at {self.database_url}")
+            except Exception as e:
+                print(f"❌ Failed to create database tables: {e}")
+                raise
         else:
             # For other databases, use synchronous version
             self.engine = create_engine(self.database_url, echo=False)

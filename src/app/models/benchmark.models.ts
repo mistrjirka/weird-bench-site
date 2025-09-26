@@ -69,6 +69,40 @@ export interface HardwareSummary {
 }
 
 // API response types
+// Additional interfaces for processed benchmark data
+export interface ProcessedBenchmarkData {
+  benchmark_type: string;
+  hardware_type: 'cpu' | 'gpu';
+  data_points: ProcessedDataPoint[];
+  median_values: { [key: string]: any };
+  stats: { [key: string]: any };
+  file_count: number;
+  valid_file_count: number;
+}
+
+export interface ProcessedDataPoint {
+  group: string;
+  run_count: number;
+  // Type-specific properties
+  type?: string; // For reversan (depth/threads)
+  depth?: number; // For reversan depth tests
+  threads?: number; // For reversan thread tests
+  thread_count?: number; // For 7zip
+  tokens_per_second_median?: number; // For llama
+  nodes_per_second_median?: number; // For reversan
+  render_time_median?: number; // For blender
+  compression_mips_median?: number; // For 7zip
+  decompression_mips_median?: number; // For 7zip
+  total_mips_median?: number; // For 7zip
+  [key: string]: any; // For additional benchmark-specific metrics
+}
+
+export interface ProcessedBenchmarkResponse {
+  success: boolean;
+  data: ProcessedBenchmarkData[];
+  timestamp: number;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;

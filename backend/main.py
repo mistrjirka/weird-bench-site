@@ -16,6 +16,7 @@ from models import (
     HealthResponse, 
     HardwareListResponse, 
     HardwareDetailResponse,
+    ProcessedBenchmarkResponse,
     UploadResponse,
     BenchmarkData,
     HardwareInfo,
@@ -150,6 +151,28 @@ async def get_hardware_detail(type: str, id: str):
         logger.error(f"Error getting hardware detail {type}/{id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve hardware details")
 
+@app.get("/api/hardware-processed-data", response_model=ProcessedBenchmarkResponse)
+async def get_hardware_processed_data(type: str, id: str):
+    """Get processed and aggregated benchmark data for specific hardware"""
+    if type not in ["cpu", "gpu"]:
+        raise HTTPException(status_code=400, detail="Type must be 'cpu' or 'gpu'")
+    
+    if not id:
+        raise HTTPException(status_code=400, detail="Hardware ID is required")
+    
+    try:
+        processed_data = await storage_manager.get_processed_benchmark_data(type, id)
+        return ProcessedBenchmarkResponse(
+            success=True,
+            data=processed_data,
+            timestamp=int(time.time())
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting processed data for {type}/{id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve processed benchmark data")
+
 @app.post("/api/upload", response_model=UploadResponse)
 async def upload_benchmark(request: Request):
     """Upload benchmark results from run_benchmarks.py"""
@@ -182,32 +205,93 @@ async def upload_benchmark(request: Request):
         
         # Process uploaded benchmark files
         benchmark_results = {}
+        file_errors = []
+        
         for file in uploaded_files:
-            if not file.filename or not file.filename.endswith('.json'):
+            filename = getattr(file, 'filename', None)
+            if not filename or not isinstance(filename, str) or not filename.endswith('.json'):
+                file_errors.append(f"Invalid file: {filename}")
                 continue
                 
-            content = await file.read()
             try:
-                benchmark_data = json.loads(content)
-                # Extract benchmark type from filename or form field name
-                benchmark_type = file.filename.replace('.json', '').replace('_results', '')
-                benchmark_results[benchmark_type] = benchmark_data
-            except json.JSONDecodeError:
-                logger.warning(f"Invalid JSON in file {file.filename}")
+                content = await file.read()
+                if not content:
+                    file_errors.append(f"Empty file: {filename}")
+                    continue
+                    
+                try:
+                    benchmark_data = json.loads(content)
+                    if not benchmark_data:
+                        file_errors.append(f"Empty JSON in file: {filename}")
+                        continue
+                    
+                    # Extract benchmark type from filename or form field name
+                    benchmark_type = filename.replace('.json', '').replace('_results', '')
+                    # Remove common prefixes like "run_1_"
+                    if benchmark_type.startswith('run_'):
+                        parts = benchmark_type.split('_')
+                        if len(parts) >= 3:  # e.g., "run_1_blender"
+                            benchmark_type = '_'.join(parts[2:])
+                    
+                    if benchmark_type not in ['llama', 'blender', '7zip', 'reversan']:
+                        file_errors.append(f"Unknown benchmark type in filename: {filename}")
+                        continue
+                    
+                    benchmark_results[benchmark_type] = benchmark_data
+                    logger.info(f"Successfully parsed file: {filename} as {benchmark_type}")
+                    
+                except json.JSONDecodeError as e:
+                    file_errors.append(f"Invalid JSON in file {filename}: {str(e)}")
+                    continue
+                    
+            except Exception as e:
+                file_errors.append(f"Error reading file {filename}: {str(e)}")
                 continue
-        
+
+        # If ANY file had errors, reject the entire upload
+        if file_errors:
+            error_message = f"Upload failed due to file errors: {'; '.join(file_errors)}"
+            logger.error(error_message)
+            raise HTTPException(status_code=400, detail=error_message)
+
         if not benchmark_results:
             raise HTTPException(status_code=400, detail="No valid benchmark JSON files found")
+
+        # VALIDATE ALL BENCHMARK DATA BEFORE PROCESSING
+        try:
+            all_valid, validation_errors = json_validator.are_all_benchmarks_valid(benchmark_results)
+            if not all_valid:
+                error_details = []
+                for benchmark_type, error in validation_errors.items():
+                    error_details.append(f"{benchmark_type}: {error}")
+                validation_error = f"Validation failed - Upload rejected. {'; '.join(error_details)}"
+                logger.error(f"Validation failed for benchmark data: {'; '.join(error_details)}")
+                raise HTTPException(status_code=400, detail=validation_error)
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error during validation: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Validation system error: {str(e)}")
+
+        # EXTRACT HARDWARE INFORMATION
+        try:
+            extracted_hardware_list = await hardware_extractor.extract_hardware_info(
+                benchmark_results, hardware_data
+            )
+            logger.info(f"Extracted hardware info for {len(extracted_hardware_list)} hardware entries")
+        except Exception as e:
+            logger.error(f"Error extracting hardware info: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Hardware extraction failed: {str(e)}")
         
-        # Extract hardware information and store data
-        extracted_hardware_list = await hardware_extractor.extract_hardware_info(
-            benchmark_results, hardware_data
-        )
-        
-        # Store the benchmark run
-        result = await storage_manager.store_benchmark_run(
-            run_id, extracted_hardware_list, benchmark_results, int(timestamp)
-        )
+        # STORE THE BENCHMARK RUN
+        try:
+            result = await storage_manager.store_benchmark_run(
+                run_id, extracted_hardware_list, benchmark_results, int(timestamp)
+            )
+            logger.info(f"Successfully stored benchmark run {run_id}")
+        except Exception as e:
+            logger.error(f"Error storing benchmark run: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Storage failed: {str(e)}")
         
         return UploadResponse(
             success=True,
@@ -216,10 +300,11 @@ async def upload_benchmark(request: Request):
             timestamp=int(time.time())
         )
         
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid hardware_info JSON format")
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
-        logger.error(f"Error uploading benchmark: {str(e)}")
+        logger.error(f"Unexpected error uploading benchmark: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to upload benchmark data")
 
 # Legacy endpoint compatibility (if needed)

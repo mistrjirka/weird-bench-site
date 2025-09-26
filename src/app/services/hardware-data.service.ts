@@ -5,7 +5,9 @@ import {
   HardwareInfo, 
   HardwareSummary, 
   HardwareListResponse, 
-  HardwareDetailResponse
+  HardwareDetailResponse,
+  ProcessedBenchmarkResponse,
+  ProcessedBenchmarkData
 } from '../models/benchmark.models';
 import { environment } from '../../environments/environment';
 
@@ -193,42 +195,40 @@ export class HardwareDataService {
   }
 
   /**
-   * Load specific benchmark file for hardware - gets data directly from API
+   * Load processed benchmark data for specific hardware from API
    */
-  loadBenchmarkFile(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any> {
-    return this.http.get<any>(`${this.apiBaseUrl}/hardware-detail?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
-      map(response => {
-        const benchmarkFiles = response.data?.benchmarkFiles || [];
-        if (!benchmarkFiles || !Array.isArray(benchmarkFiles)) return null;
-        
-        // Find the first benchmark of the specific type
-        const benchmark = benchmarkFiles.find((b: any) => b.type === benchmarkType);
-        return benchmark ? benchmark.data : null;
-      }),
+  loadProcessedBenchmarkData(type: 'cpu' | 'gpu', id: string): Observable<ProcessedBenchmarkData[]> {
+    return this.http.get<ProcessedBenchmarkResponse>(`${this.apiBaseUrl}/hardware-processed-data?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
+      map(response => response.data || []),
       catchError(error => {
-        console.error(`Failed to load ${benchmarkType} benchmark for ${id}:`, error);
-        return of(null);
+        console.error(`Failed to load processed benchmark data for ${type}/${id}:`, error);
+        return of([]);
       })
     );
   }
 
+  /**
+   * Load specific benchmark file for hardware - DEPRECATED - use loadProcessedBenchmarkData instead
+   */
+  loadBenchmarkFile(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any> {
+    console.warn('loadBenchmarkFile is deprecated, use loadProcessedBenchmarkData instead');
+    return this.loadProcessedBenchmarkData(type, id).pipe(
+      map(data => {
+        const benchmark = data.find(b => b.benchmark_type === benchmarkType);
+        return benchmark || null;
+      })
+    );
+  }
+
+  /**
+   * Load benchmark files for hardware - DEPRECATED - use loadProcessedBenchmarkData instead
+   */
   loadBenchmarkFiles(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any[]> {
-    return this.http.get<any>(`${this.apiBaseUrl}/hardware-detail?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
-      map(response => {
-        const benchmarkFiles = response.data?.benchmarkFiles || [];
-        if (!benchmarkFiles || !Array.isArray(benchmarkFiles)) return [];
-        
-        // Find all benchmarks of the specific type
-        const benchmarks = benchmarkFiles
-          .filter((b: any) => b.type === benchmarkType)
-          .map((b: any) => b.data)
-          .filter((data: any) => data !== null);
-        
-        return benchmarks;
-      }),
-      catchError(error => {
-        console.error(`Failed to load ${benchmarkType} benchmarks for ${id}:`, error);
-        return of([]);
+    console.warn('loadBenchmarkFiles is deprecated, use loadProcessedBenchmarkData instead');
+    return this.loadProcessedBenchmarkData(type, id).pipe(
+      map(data => {
+        const benchmark = data.find(b => b.benchmark_type === benchmarkType);
+        return benchmark ? [benchmark] : [];
       })
     );
   }

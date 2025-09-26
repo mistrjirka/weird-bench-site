@@ -124,11 +124,13 @@
                                             {{ getBenchmarkSummary(benchmarkType).totalTokens }}
                                           }
                                         </p>
-                                        <p><strong>Compile Time:</strong>
-                                          @if (typeof getBenchmarkSummary(benchmarkType).compileTimeSeconds === 'number') {
-                                            {{ getBenchmarkSummary(benchmarkType).compileTimeSeconds | number:'1.2-2' }}s
-                                          } @else { N/A }
-                                        </p>
+                                        @if (hardwareType() === 'cpu') {
+                                          <p><strong>Compile Time:</strong>
+                                            @if (typeof getBenchmarkSummary(benchmarkType).compileTimeSeconds === 'number') {
+                                              {{ getBenchmarkSummary(benchmarkType).compileTimeSeconds | number:'1.2-2' }}s
+                                            } @else { N/A }
+                                          </p>
+                                        }
                                       </div>
                                     }
                                     @case ('blender') {
@@ -138,20 +140,13 @@
                                         <p><strong>Scenes:</strong> {{ getBenchmarkSummary(benchmarkType).scenesCount }}</p>
                                       </div>
                                       <div class="col-md-6">
-                                        <p><strong>Total Time:</strong>
-                                          @if (typeof getBenchmarkSummary(benchmarkType).elapsedSeconds === 'number') {
-                                            {{ getBenchmarkSummary(benchmarkType).elapsedSeconds | number:'1.2-2' }}s
-                                          } @else {
-                                            N/A
-                                          }
-                                        </p>
-                                        <p><strong>Total Score:</strong> 
-                                          @if (typeof getBenchmarkSummary(benchmarkType).totalScore === 'number') {
-                                            {{ getBenchmarkSummary(benchmarkType).totalScore | number:'1.2-2' }}
-                                          } @else {
-                                            {{ getBenchmarkSummary(benchmarkType).totalScore }}
-                                          }
-                                        </p>
+                                        <p><strong>Scene Scores:</strong></p>
+                                        @for (scene of getBenchmarkSummary(benchmarkType).sceneScores; track scene.scene) {
+                                          <p class="mb-1">
+                                            <span class="text-muted">{{ scene.scene }}:</span> 
+                                            {{ scene.samplesPerMinute | number:'1.2-2' }} SPM
+                                          </p>
+                                        }
                                       </div>
                                     }
                                     @case ('7zip') {
@@ -168,7 +163,6 @@
                                       </div>
                                       <div class="col-md-6">
                                         <p><strong>Archive Size:</strong> {{ (getBenchmarkSummary(benchmarkType).archiveSize / 1024 / 1024) | number:'1.2-2' }}MB</p>
-                                        <p><strong>Compression Ratio:</strong> {{ getBenchmarkSummary(benchmarkType).compressionRatio | number:'1.2-2' }}</p>
                                         <p><strong>Total Runs:</strong> {{ getBenchmarkSummary(benchmarkType).totalRuns }}</p>
                                       </div>
                                     }
@@ -190,7 +184,7 @@
                                         </p>
                                       </div>
                                       <div class="col-md-6">
-                                        <p><strong>Best Depth Time:</strong> 
+                                        <p><strong>Depth 10 Time:</strong> 
                                           @if (typeof getBenchmarkSummary(benchmarkType).bestDepthTime === 'number') {
                                             {{ getBenchmarkSummary(benchmarkType).bestDepthTime | number:'1.2-2' }}s
                                           } @else {
@@ -278,16 +272,18 @@
                                           <small class="text-muted">Total Tokens</small>
                                         </div>
                                       </div>
-                                      <div class="col-md-4 mt-3">
-                                        <div class="text-center">
-                                          <h4 class="text-secondary">
-                                            @if (typeof getBenchmarkSummary(benchmarkType).compileTimeSeconds === 'number') {
-                                              {{ getBenchmarkSummary(benchmarkType).compileTimeSeconds | number:'1.1-1' }}s
-                                            } @else { N/A }
-                                          </h4>
-                                          <small class="text-muted">Compile Time</small>
+                                      @if (hardwareType() === 'cpu') {
+                                        <div class="col-md-4 mt-3">
+                                          <div class="text-center">
+                                            <h4 class="text-secondary">
+                                              @if (typeof getBenchmarkSummary(benchmarkType).compileTimeSeconds === 'number') {
+                                                {{ getBenchmarkSummary(benchmarkType).compileTimeSeconds | number:'1.1-1' }}s
+                                              } @else { N/A }
+                                            </h4>
+                                            <small class="text-muted">Compile Time</small>
+                                          </div>
                                         </div>
-                                      </div>
+                                      }
                                     }
                                     @case ('blender') {
                                       <div class="col-md-4">
@@ -326,16 +322,10 @@
                                           <small class="text-muted">Best Time</small>
                                         </div>
                                       </div>
-                                      <div class="col-md-4">
+                                      <div class="col-md-6">
                                         <div class="text-center">
                                           <h4 class="text-success">{{ getBenchmarkSummary(benchmarkType).bestThreads }}</h4>
                                           <small class="text-muted">Best Threads</small>
-                                        </div>
-                                      </div>
-                                      <div class="col-md-4">
-                                        <div class="text-center">
-                                          <h4 class="text-info">{{ getBenchmarkSummary(benchmarkType).compressionRatio | number:'1.2-2' }}</h4>
-                                          <small class="text-muted">Compression Ratio</small>
                                         </div>
                                       </div>
                                     }

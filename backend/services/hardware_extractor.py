@@ -45,9 +45,17 @@ class HardwareExtractor:
         primary_gpu = self._get_primary_hardware(hardware_info['gpus'], provided_hardware.get('gpu'))
         
         hardware_entries = []
-        
-        # Create CPU hardware entry if we have CPU benchmarks
-        cpu_benchmarks = [bt for bt in benchmark_data.keys() if bt in ['7zip', 'reversan'] or (bt == 'llama' and benchmark_data[bt].get('runs_cpu'))]
+
+        # Create CPU hardware entry if we have CPU benchmarks (include Blender CPU device runs)
+        cpu_benchmarks = [
+            bt for bt in benchmark_data.keys()
+            if bt in ['7zip', 'reversan']
+            or (bt == 'llama' and benchmark_data[bt].get('runs_cpu'))
+            or (bt == 'blender' and any(
+                (dr or {}).get('device_framework') == 'CPU'
+                for dr in (benchmark_data[bt].get('device_runs') or [])
+            ))
+        ]
         if cpu_benchmarks and primary_cpu:
             cpu_id = self._generate_hardware_id(primary_cpu['name'])
             hardware_entries.append(StoredHardware(
@@ -65,7 +73,7 @@ class HardwareExtractor:
         
         # Create GPU hardware entry if we have GPU benchmarks and valid GPU
         gpu_benchmarks = [bt for bt in benchmark_data.keys() if bt in ['blender'] or (bt == 'llama' and benchmark_data[bt].get('runs_gpu'))]
-        if gpu_benchmarks and primary_gpu and primary_gpu['name'].lower() != 'unknown':
+        if gpu_benchmarks and primary_gpu and isinstance(primary_gpu.get('name'), str) and primary_gpu['name'].lower() != 'unknown':
             gpu_id = self._generate_hardware_id(primary_gpu['name'])
             hardware_entries.append(StoredHardware(
                 id=gpu_id,
@@ -82,7 +90,7 @@ class HardwareExtractor:
         
         # Fallback: if no specific benchmarks found, create based on detected hardware
         if not hardware_entries:
-            if primary_gpu and primary_gpu['name'].lower() != 'unknown':
+            if primary_gpu and isinstance(primary_gpu.get('name'), str) and primary_gpu['name'].lower() != 'unknown':
                 gpu_id = self._generate_hardware_id(primary_gpu['name'])
                 hardware_entries.append(StoredHardware(
                     id=gpu_id,
@@ -253,8 +261,11 @@ class HardwareExtractor:
 
     def _is_cpu_device(self, device_name: str, framework: Optional[str]) -> bool:
         """Check if device is a CPU"""
-        if framework and framework.lower() == 'cpu':
+        if framework and isinstance(framework, str) and framework.lower() == 'cpu':
             return True
+        
+        if not isinstance(device_name, str):
+            return False
         
         device_name_lower = device_name.lower()
         cpu_keywords = ['cpu', 'processor', 'intel', 'amd', 'ryzen', 'xeon']
@@ -262,6 +273,9 @@ class HardwareExtractor:
 
     def _detect_cpu_manufacturer(self, cpu_name: str) -> str:
         """Detect CPU manufacturer from name"""
+        if not isinstance(cpu_name, str):
+            return 'Unknown'
+        
         cpu_name_lower = cpu_name.lower()
         
         for manufacturer, patterns in self.cpu_patterns.items():
@@ -273,6 +287,9 @@ class HardwareExtractor:
 
     def _detect_gpu_manufacturer(self, gpu_name: str) -> str:
         """Detect GPU manufacturer from name"""
+        if not isinstance(gpu_name, str):
+            return 'Unknown'
+        
         gpu_name_lower = gpu_name.lower()
         
         for manufacturer, patterns in self.gpu_patterns.items():
@@ -284,7 +301,7 @@ class HardwareExtractor:
 
     def _detect_gpu_framework(self, gpu_name: str, framework: Optional[str] = None) -> str:
         """Detect GPU framework (CUDA, OpenCL, etc.)"""
-        if framework:
+        if framework and isinstance(framework, str):
             framework_lower = framework.lower()
             if 'cuda' in framework_lower:
                 return 'CUDA'
@@ -292,6 +309,9 @@ class HardwareExtractor:
                 return 'OpenCL'
             elif 'vulkan' in framework_lower:
                 return 'Vulkan'
+        
+        if not isinstance(gpu_name, str):
+            return 'Unknown'
         
         gpu_name_lower = gpu_name.lower()
         
@@ -307,8 +327,11 @@ class HardwareExtractor:
     def _hardware_exists(self, hardware_list: List[Dict], new_hardware: Dict) -> bool:
         """Check if hardware already exists in list"""
         for existing in hardware_list:
-            if existing.get('name', '').lower() == new_hardware.get('name', '').lower():
-                return True
+            existing_name = existing.get('name', '')
+            new_name = new_hardware.get('name', '')
+            if isinstance(existing_name, str) and isinstance(new_name, str):
+                if existing_name.lower() == new_name.lower():
+                    return True
         return False
 
     def _get_primary_hardware(self, extracted_hardware: List[Dict], provided_name: Optional[str]) -> Dict:
@@ -325,6 +348,9 @@ class HardwareExtractor:
 
     def _generate_hardware_id(self, hardware_name: str) -> str:
         """Generate a consistent hardware ID from name"""
+        if not isinstance(hardware_name, str):
+            return 'unknown-hardware'
+        
         # Convert to lowercase, replace spaces and special chars with hyphens
         hardware_id = re.sub(r'[^\w\s-]', '', hardware_name.lower())
         hardware_id = re.sub(r'[-\s]+', '-', hardware_id)

@@ -45,9 +45,23 @@ class HardwareDetail(BaseModel):
     totalBenchmarks: int
     lastUpdated: int
 
+class ProcessedBenchmarkData(BaseModel):
+    benchmark_type: str
+    hardware_type: str  # "cpu" or "gpu"
+    data_points: List[Dict[str, Any]]
+    median_values: Dict[str, Any]
+    stats: Dict[str, Any]
+    file_count: int
+    valid_file_count: int
+
 class HardwareDetailResponse(BaseModel):
     success: bool = True
     data: HardwareDetail
+    timestamp: int
+
+class ProcessedBenchmarkResponse(BaseModel):
+    success: bool = True
+    data: List[ProcessedBenchmarkData]
     timestamp: int
 
 class UploadResult(BaseModel):
