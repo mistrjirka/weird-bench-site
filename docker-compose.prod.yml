@@ -4,6 +4,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile  # Production multi-stage build
+
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     expose:
       - "8000"  # Internal port only, not exposed to host
     volumes:
@@ -27,9 +31,14 @@ services:
 
   # Nginx reverse proxy to serve both frontend and API
   nginx:
+
     build:
       context: .
       dockerfile: Dockerfile.nginx
+
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     ports:
       - "8000:80"
     volumes:
