@@ -233,13 +233,16 @@ class StorageManager:
         build_times = []
 
         for data in data_list:
+            # Handle wrapped data structure - extract from 'results' if present
+            actual_data = data.get('results', data) if 'results' in data else data
+            
             if hardware_type == "cpu":
-                runs = data.get("runs_cpu", [])
-                build_info = data.get("build", {}).get("cpu_build_timing", {})
+                runs = actual_data.get("runs_cpu", [])
+                build_info = actual_data.get("build", {}).get("cpu_build_timing", {})
                 if "build_time_seconds" in build_info:
                     build_times.append(build_info["build_time_seconds"])
             else:
-                runs = data.get("runs_gpu", [])
+                runs = actual_data.get("runs_gpu", [])
             
             all_runs.extend(runs)
 
@@ -330,7 +333,10 @@ class StorageManager:
         scenes_tested = set()
         
         for data in data_list:
-            device_runs = data.get("device_runs", [])
+            # Handle wrapped data structure - extract from 'results' if present
+            actual_data = data.get('results', data) if 'results' in data else data
+            
+            device_runs = actual_data.get("device_runs", [])
             # Filter runs based on hardware type
             if hardware_type == "cpu":
                 filtered_runs = [run for run in device_runs if run.get("device_framework") == "CPU"]
@@ -339,8 +345,8 @@ class StorageManager:
             all_runs.extend(filtered_runs)
             
             # Collect scenes tested from top-level data
-            if "scenes_tested" in data:
-                scenes_tested.update(data["scenes_tested"])
+            if "scenes_tested" in actual_data:
+                scenes_tested.update(actual_data["scenes_tested"])
 
         # Process individual scene results from raw_json
         scene_results = {}
@@ -463,9 +469,12 @@ class StorageManager:
         build_times = []
         
         for data in data_list:
-            depth_runs = data.get("runs_depth", [])
-            thread_runs = data.get("runs_threads", [])
-            build_info = data.get("build", {})
+            # Handle wrapped data structure - extract from 'results' if present
+            actual_data = data.get('results', data) if 'results' in data else data
+            
+            depth_runs = actual_data.get("runs_depth", [])
+            thread_runs = actual_data.get("runs_threads", [])
+            build_info = actual_data.get("build", {})
             
             all_depth_runs.extend(depth_runs)
             all_thread_runs.extend(thread_runs)
@@ -639,16 +648,19 @@ class StorageManager:
 
     def _should_store_for_hardware_type(self, benchmark_type: str, hardware_type: str, data: Dict[str, Any]) -> bool:
         """Determine if a benchmark should be stored for a given hardware type"""
+        # Handle wrapped data structure - extract from 'results' if present
+        actual_data = data.get('results', data) if 'results' in data else data
+        
         if hardware_type == 'cpu':
             # CPU hardware stores: 7zip, reversan, CPU part of llama, CPU part of blender
             if benchmark_type in ['7zip', 'reversan']:
                 return True
-            if benchmark_type == 'llama' and data.get('runs_cpu'):
+            if benchmark_type == 'llama' and actual_data.get('runs_cpu'):
                 return True
             if benchmark_type == 'blender':
                 # Store Blender under CPU only if there are CPU runs in the payload
                 try:
-                    device_runs = data.get('device_runs') or []
+                    device_runs = actual_data.get('device_runs') or []
                     cpu_runs = [run for run in device_runs if run.get('device_framework') == 'CPU']
                     if cpu_runs:
                         return True
@@ -661,10 +673,10 @@ class StorageManager:
         elif hardware_type == 'gpu':
             # GPU hardware stores: blender, GPU part of llama
             if benchmark_type == 'blender':
-                device_runs = data.get('device_runs') or []
+                device_runs = actual_data.get('device_runs') or []
                 gpu_runs = [run for run in device_runs if run.get('device_framework') != 'CPU']
-                return True
-            if benchmark_type == 'llama' and data.get('runs_gpu'):
+                return len(gpu_runs) > 0  # Only store if there are actual GPU runs
+            if benchmark_type == 'llama' and actual_data.get('runs_gpu'):
                 return True
             return False
         
