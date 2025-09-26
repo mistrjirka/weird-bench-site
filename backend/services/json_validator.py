@@ -48,14 +48,10 @@ class JsonValidator:
         
         schema = self.schemas[benchmark_type]
         
-        # Prepare data for schema validation - handle wrapper structures
-        schema_data = data
-        if (benchmark_type == "7zip" or benchmark_type == "blender") and "results" in data:
-            # For 7zip and blender, use the inner results object for schema validation
-            schema_data = data["results"]
-        
+        # All schemas now expect the full wrapper structure (benchmark_name, timestamp, results)
+        # No need to strip the wrapper for validation
         try:
-            jsonschema.validate(schema_data, schema)
+            jsonschema.validate(data, schema)
             return True, None
         except jsonschema.ValidationError as e:
             return False, f"Schema validation failed: {e.message}"
@@ -65,7 +61,7 @@ class JsonValidator:
     def _validate_benchmark_structure(self, benchmark_type: str, data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
         """Validate the structural content of benchmark data"""
         try:
-            # Handle different data structures
+            # Handle different data structures - all now have the wrapper structure
             if benchmark_type == "7zip":
                 # 7zip has data wrapped in "results"
                 if "results" in data:
@@ -74,13 +70,18 @@ class JsonValidator:
                     actual_data = data
                 return self._validate_7zip_structure(actual_data)
             else:
-                # Other benchmarks have direct top-level structure
+                # Other benchmarks have direct top-level structure inside "results"
+                if "results" in data:
+                    actual_data = data["results"]
+                else:
+                    actual_data = data
+                    
                 if benchmark_type == "blender":
-                    return self._validate_blender_structure(data)
+                    return self._validate_blender_structure(actual_data)
                 elif benchmark_type == "llama":
-                    return self._validate_llama_structure(data)
+                    return self._validate_llama_structure(actual_data)
                 elif benchmark_type == "reversan":
-                    return self._validate_reversan_structure(data)
+                    return self._validate_reversan_structure(actual_data)
             
             return True, None
             

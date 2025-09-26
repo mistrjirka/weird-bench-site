@@ -1,185 +1,198 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["meta", "build"],
+  "required": ["benchmark_name", "timestamp", "results"],
   "properties": {
-    "meta": {
-      "type": "object",
-      "required": ["benchmark_name", "host", "platform", "timestamp"],
-      "properties": {
-        "benchmark_name": {
-          "type": "string",
-          "const": "reversan"
-        },
-        "host": {
-          "type": "string"
-        },
-        "platform": {
-          "type": "string"
-        },
-        "timestamp": {
-          "type": "number"
-        },
-        "gnu_time": {
-          "type": "boolean"
-        },
-        "repo": {
-          "type": "string"
-        },
-        "test_runs_per_config": {
-          "type": "integer",
-          "minimum": 1
-        }
-      }
+    "benchmark_name": {
+      "type": "string",
+      "const": "reversan"
     },
-    "build": {
-      "type": "object",
-      "required": ["binary", "compile_time_seconds", "config_time_seconds", "build_time_seconds"],
-      "properties": {
-        "binary": {
-          "type": "string"
-        },
-        "compile_time_seconds": {
-          "type": "number",
-          "minimum": 0
-        },
-        "config_time_seconds": {
-          "type": "number",
-          "minimum": 0
-        },
-        "build_time_seconds": {
-          "type": "number",
-          "minimum": 0
-        },
-        "time_measurer": {
-          "type": "string"
-        },
-        "threads_supported": {
-          "type": "boolean"
-        },
-        "help_snippet": {
-          "type": "string"
-        }
-      }
+    "timestamp": {
+      "type": "number"
     },
-    "runs_depth": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["depth", "returncode", "metrics"],
-        "properties": {
-          "depth": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "returncode": {
-            "type": "integer"
-          },
-          "metrics": {
-            "type": "object",
-            "required": ["max_rss_kb", "user_seconds", "sys_seconds", "elapsed_seconds"],
-            "properties": {
-              "max_rss_kb": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "user_seconds": {
-                "type": "number",
-                "minimum": 0
-              },
-              "sys_seconds": {
-                "type": "number",
-                "minimum": 0
-              },
-              "elapsed_seconds": {
-                "type": "number",
-                "minimum": 0
-              }
+    "results": {
+      "type": "object",
+      "required": ["meta", "build"],
+      "properties": {
+        "meta": {
+          "type": "object",
+          "required": ["benchmark_name", "host", "platform", "timestamp"],
+          "properties": {
+            "benchmark_name": {
+              "type": "string",
+              "const": "reversan"
+            },
+            "host": {
+              "type": "string"
+            },
+            "platform": {
+              "type": "string"
+            },
+            "timestamp": {
+              "type": "number"
+            },
+            "gnu_time": {
+              "type": "boolean"
+            },
+            "repo": {
+              "type": "string"
+            },
+            "test_runs_per_config": {
+              "type": "integer",
+              "minimum": 1
             }
-          },
-          "stderr_tail": {
-            "type": "string"
-          },
-          "average_metrics": {
+          }
+        },
+        "build": {
+          "type": "object",
+          "required": ["binary", "compile_time_seconds", "config_time_seconds", "build_time_seconds"],
+          "properties": {
+            "binary": {
+              "type": "string"
+            },
+            "compile_time_seconds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "config_time_seconds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "build_time_seconds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "time_measurer": {
+              "type": "string"
+            },
+            "threads_supported": {
+              "type": "boolean"
+            },
+            "help_snippet": {
+              "type": "string"
+            }
+          }
+        },
+        "runs_depth": {
+          "type": "array",
+          "items": {
             "type": "object",
+            "required": ["depth", "returncode", "metrics"],
             "properties": {
-              "max_rss_kb": {
-                "type": "number",
-                "minimum": 0
+              "depth": {
+                "type": "integer",
+                "minimum": 1
               },
-              "user_seconds": {
-                "type": "number",
-                "minimum": 0
+              "returncode": {
+                "type": "integer"
               },
-              "sys_seconds": {
-                "type": "number",
-                "minimum": 0
+              "metrics": {
+                "type": "object",
+                "required": ["max_rss_kb", "user_seconds", "sys_seconds", "elapsed_seconds"],
+                "properties": {
+                  "max_rss_kb": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "user_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "sys_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "elapsed_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
               },
-              "elapsed_seconds": {
-                "type": "number",
-                "minimum": 0
+              "stderr_tail": {
+                "type": "string"
+              },
+              "average_metrics": {
+                "type": "object",
+                "properties": {
+                  "max_rss_kb": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "user_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "sys_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "elapsed_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
               }
             }
           }
-        }
-      }
-    },
-    "runs_threads": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["threads", "returncode", "metrics"],
-        "properties": {
-          "threads": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "returncode": {
-            "type": "integer"
-          },
-          "metrics": {
+        },
+        "runs_threads": {
+          "type": "array",
+          "items": {
             "type": "object",
-            "required": ["max_rss_kb", "user_seconds", "sys_seconds", "elapsed_seconds"],
+            "required": ["threads", "returncode", "metrics"],
             "properties": {
-              "max_rss_kb": {
+              "threads": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 1
               },
-              "user_seconds": {
-                "type": "number",
-                "minimum": 0
+              "returncode": {
+                "type": "integer"
               },
-              "sys_seconds": {
-                "type": "number",
-                "minimum": 0
+              "metrics": {
+                "type": "object",
+                "required": ["max_rss_kb", "user_seconds", "sys_seconds", "elapsed_seconds"],
+                "properties": {
+                  "max_rss_kb": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "user_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "sys_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "elapsed_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
               },
-              "elapsed_seconds": {
-                "type": "number",
-                "minimum": 0
-              }
-            }
-          },
-          "stderr_tail": {
-            "type": "string"
-          },
-          "average_metrics": {
-            "type": "object",
-            "properties": {
-              "max_rss_kb": {
-                "type": "number",
-                "minimum": 0
+              "stderr_tail": {
+                "type": "string"
               },
-              "user_seconds": {
-                "type": "number",
-                "minimum": 0
-              },
-              "sys_seconds": {
-                "type": "number",
-                "minimum": 0
-              },
-              "elapsed_seconds": {
-                "type": "number",
-                "minimum": 0
+              "average_metrics": {
+                "type": "object",
+                "properties": {
+                  "max_rss_kb": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "user_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "sys_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "elapsed_seconds": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
               }
             }
           }
