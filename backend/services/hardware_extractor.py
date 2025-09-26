@@ -79,7 +79,7 @@ class HardwareExtractor:
                 updated_at=0   # Will be set by storage manager
             ))
         
-        # Create GPU hardware entry if we have GPU benchmarks and valid GPU
+        # Create GPU hardware entries - one for each GPU found
         gpu_benchmarks = []
         for bt in benchmark_data.keys():
             if bt == 'blender':
@@ -90,38 +90,45 @@ class HardwareExtractor:
                 actual_data = data.get('results', data) if 'results' in data else data
                 if actual_data.get('runs_gpu'):
                     gpu_benchmarks.append(bt)
-        if gpu_benchmarks and primary_gpu and isinstance(primary_gpu.get('name'), str) and primary_gpu['name'].lower() != 'unknown':
-            gpu_id = self._generate_hardware_id(primary_gpu['name'])
-            hardware_entries.append(StoredHardware(
-                id=gpu_id,
-                name=primary_gpu['name'],
-                manufacturer=primary_gpu.get('manufacturer', 'Unknown'),
-                type='gpu',
-                cores=None,
-                framework=primary_gpu.get('framework'),
-                directory_path=f"gpu/{gpu_id}",
-                benchmark_runs=[],
-                created_at=0,  # Will be set by storage manager
-                updated_at=0   # Will be set by storage manager
-            ))
+        
+        # Create separate hardware entry for each GPU
+        for gpu_info in hardware_info['gpus']:
+            if isinstance(gpu_info.get('name'), str) and gpu_info['name'].lower() != 'unknown':
+                gpu_id = self._generate_hardware_id(gpu_info['name'])
+                hardware_entries.append(StoredHardware(
+                    id=gpu_id,
+                    name=gpu_info['name'],
+                    manufacturer=gpu_info.get('manufacturer', 'Unknown'),
+                    type='gpu',
+                    cores=None,
+                    framework=gpu_info.get('framework'),
+                    directory_path=f"gpu/{gpu_id}",
+                    benchmark_runs=[],
+                    created_at=0,  # Will be set by storage manager
+                    updated_at=0   # Will be set by storage manager
+                ))
         
         # Fallback: if no specific benchmarks found, create based on detected hardware
         if not hardware_entries:
-            if primary_gpu and isinstance(primary_gpu.get('name'), str) and primary_gpu['name'].lower() != 'unknown':
-                gpu_id = self._generate_hardware_id(primary_gpu['name'])
-                hardware_entries.append(StoredHardware(
-                    id=gpu_id,
-                    name=primary_gpu['name'],
-                    manufacturer=primary_gpu.get('manufacturer', 'Unknown'),
-                    type='gpu',
-                    cores=None,
-                    framework=primary_gpu.get('framework'),
-                    directory_path=f"gpu/{gpu_id}",
-                    benchmark_runs=[],
-                    created_at=0,
-                    updated_at=0
-                ))
-            else:
+            # Create entries for all detected GPUs
+            for gpu_info in hardware_info['gpus']:
+                if isinstance(gpu_info.get('name'), str) and gpu_info['name'].lower() != 'unknown':
+                    gpu_id = self._generate_hardware_id(gpu_info['name'])
+                    hardware_entries.append(StoredHardware(
+                        id=gpu_id,
+                        name=gpu_info['name'],
+                        manufacturer=gpu_info.get('manufacturer', 'Unknown'),
+                        type='gpu',
+                        cores=None,
+                        framework=gpu_info.get('framework'),
+                        directory_path=f"gpu/{gpu_id}",
+                        benchmark_runs=[],
+                        created_at=0,
+                        updated_at=0
+                    ))
+            
+            # If no GPUs, create CPU entry
+            if not hardware_entries and primary_cpu:
                 cpu_id = self._generate_hardware_id(primary_cpu['name'])
                 hardware_entries.append(StoredHardware(
                     id=cpu_id,
@@ -213,7 +220,23 @@ class HardwareExtractor:
                         hardware_info['cpus'].append(cpu)
                     break
         
-        if actual_data.get('runs_gpu'):
+        # Check if GPU selection is specified
+        gpu_selection = actual_data.get('gpu_selection')
+        if gpu_selection and gpu_selection.get('available_gpus'):
+            # Use GPU selection info to create separate entries for each GPU
+            for gpu_device in gpu_selection['available_gpus']:
+                gpu = {
+                    'name': gpu_device['name'],
+                    'type': 'gpu',
+                    'manufacturer': self._detect_gpu_manufacturer(gpu_device['name']),
+                    'framework': 'Vulkan',  # Llama uses Vulkan for GPU benchmarks
+                    'device_index': gpu_device['index'],
+                    'icd_path': gpu_device.get('icd_path')
+                }
+                if not self._hardware_exists(hardware_info['gpus'], gpu):
+                    hardware_info['gpus'].append(gpu)
+        elif actual_data.get('runs_gpu'):
+            # Fallback: extract from GPU runs (legacy behavior)
             for run in actual_data['runs_gpu']:
                 gpu_info = run.get('metrics', {}).get('system_info', {}).get('gpu_info')
                 if gpu_info:

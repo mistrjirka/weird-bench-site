@@ -133,13 +133,13 @@ class StorageManager:
 
             processed_data = []
             for benchmark_type, files in benchmark_groups.items():
-                processed_benchmark = self._process_benchmark_type(benchmark_type, files, hardware_type)
+                processed_benchmark = self._process_benchmark_type(benchmark_type, files, hardware_type, hardware.name)
                 if processed_benchmark:
                     processed_data.append(processed_benchmark)
 
             return processed_data
 
-    def _process_benchmark_type(self, benchmark_type: str, files: List, hardware_type: str) -> Optional[ProcessedBenchmarkData]:
+    def _process_benchmark_type(self, benchmark_type: str, files: List, hardware_type: str, hardware_name: str) -> Optional[ProcessedBenchmarkData]:
         """Process files of a specific benchmark type and return aggregated data"""
         if not files:
             return None
@@ -174,7 +174,7 @@ class StorageManager:
         # Process data based on benchmark type
         try:
             if benchmark_type == "llama":
-                return self._process_llama_data(valid_data, hardware_type)
+                return self._process_llama_data(valid_data, hardware_type, hardware_name)
             elif benchmark_type == "blender":
                 return self._process_blender_data(valid_data, hardware_type)
             elif benchmark_type == "7zip":
@@ -227,7 +227,7 @@ class StorageManager:
         else:
             return sorted_values[n//2]
 
-    def _process_llama_data(self, data_list: List[Dict], hardware_type: str) -> ProcessedBenchmarkData:
+    def _process_llama_data(self, data_list: List[Dict], hardware_type: str, hardware_name: str) -> ProcessedBenchmarkData:
         """Process Llama benchmark data"""
         all_runs = []
         build_times = []
@@ -297,6 +297,28 @@ class StorageManager:
         if build_times:
             median_values["build_time_seconds"] = self._calculate_median(build_times)
 
+        # Include GPU selection data if present (for GPU hardware)
+        if hardware_type == "gpu":
+            # Find GPU selection data from any of the data files
+            for data in data_list:
+                actual_data = data.get('results', data) if 'results' in data else data
+                if 'gpu_selection' in actual_data:
+                    gpu_selection = actual_data['gpu_selection']
+                    # Filter available_gpus to only include the current hardware
+                    if 'available_gpus' in gpu_selection:
+                        filtered_gpus = []
+                        for gpu_device in gpu_selection['available_gpus']:
+                            gpu_name = gpu_device.get('name', '')
+                            if gpu_name and self._gpu_names_match(gpu_name, hardware_name):
+                                filtered_gpus.append(gpu_device)
+                        if filtered_gpus:
+                            filtered_selection = gpu_selection.copy()
+                            filtered_selection['available_gpus'] = filtered_gpus
+                            median_values["gpu_selection"] = filtered_selection
+                    else:
+                        median_values["gpu_selection"] = gpu_selection
+                    break
+
         return ProcessedBenchmarkData(
             benchmark_type="llama",
             hardware_type=hardware_type,
@@ -308,7 +330,8 @@ class StorageManager:
                 "build_files": len(build_times)
             },
             file_count=len(data_list),
-            valid_file_count=len(data_list)
+            valid_file_count=len(data_list),
+            device_runs=None  # Not used for Llama
         )
 
     def _group_llama_runs(self, runs: List[Dict]) -> Dict[str, List[Dict]]:
@@ -637,7 +660,10 @@ class StorageManager:
                 
                 # Store benchmarks appropriate for this hardware type
                 for benchmark_type, data in benchmark_data.items():
-                    if self._should_store_for_hardware_type(benchmark_type, hardware_info.type, data):
+                    if self._should_store_for_hardware_type(benchmark_type, hardware_info.type, data, hardware_info.name):
+                        # Filter data based on hardware type
+                        filtered_data = self._filter_data_for_hardware(benchmark_type, data, hardware_info.type, hardware_info.name)
+                        
                         # Create file path
                         file_path = f"{hardware_info.type}/{hardware_info.id}/run_{run_number}_{benchmark_type}.json"
                         full_path = self.data_dir / file_path
@@ -647,7 +673,7 @@ class StorageManager:
                         
                         # Write JSON file
                         with open(full_path, 'w') as f:
-                            json.dump(data, f, indent=2)
+                            json.dump(filtered_data, f, indent=2)
                         
                         # Create database entry
                         benchmark_file = BenchmarkFile(
@@ -656,7 +682,7 @@ class StorageManager:
                             filename=f"run_{run_number}_{benchmark_type}.json",
                             file_path=file_path,
                             file_size=full_path.stat().st_size,
-                            data=data
+                            data=filtered_data
                         )
                         session.add(benchmark_file)
                         stored_benchmarks.append(f"{hardware_info.type}:{benchmark_type}")
@@ -670,7 +696,7 @@ class StorageManager:
                 run_id=run_id
             )
 
-    def _should_store_for_hardware_type(self, benchmark_type: str, hardware_type: str, data: Dict[str, Any]) -> bool:
+    def _should_store_for_hardware_type(self, benchmark_type: str, hardware_type: str, data: Dict[str, Any], hardware_name: str) -> bool:
         """Determine if a benchmark should be stored for a given hardware type"""
         # Handle wrapped data structure - extract from 'results' if present
         actual_data = data.get('results', data) if 'results' in data else data
@@ -701,10 +727,66 @@ class StorageManager:
                 gpu_runs = [run for run in device_runs if run.get('device_framework') != 'CPU']
                 return len(gpu_runs) > 0  # Only store if there are actual GPU runs
             if benchmark_type == 'llama' and actual_data.get('runs_gpu'):
-                return True
+                # For Llama with GPU selection, check if this specific GPU was used
+                gpu_selection = actual_data.get('gpu_selection')
+                if gpu_selection and gpu_selection.get('available_gpus'):
+                    # Check if any of the available GPUs match this hardware entry
+                    for gpu_device in gpu_selection['available_gpus']:
+                        gpu_name = gpu_device.get('name', '')
+                        if gpu_name and self._gpu_names_match(gpu_name, hardware_name):
+                            return True
+                    return False
+                else:
+                    # Legacy behavior: store if there are GPU runs
+                    return True
             return False
         
         return False
+
+    def _filter_data_for_hardware(self, benchmark_type: str, data: Dict[str, Any], hardware_type: str, hardware_name: str) -> Dict[str, Any]:
+        """Filter benchmark data to only include runs relevant to the specific hardware"""
+        # Handle wrapped data structure - extract from 'results' if present
+        actual_data = data.get('results', data) if 'results' in data else data
+        filtered_data = data.copy()
+        
+        if 'results' in data:
+            filtered_data['results'] = actual_data.copy()
+            actual_data = filtered_data['results']
+        
+        if hardware_type == 'gpu' and benchmark_type == 'llama':
+            # For GPU hardware with llama benchmarks, filter runs_gpu to only include runs for this GPU
+            if 'runs_gpu' in actual_data:
+                filtered_runs = []
+                for run in actual_data['runs_gpu']:
+                    gpu_device = run.get('gpu_device')
+                    if gpu_device and gpu_device.get('name'):
+                        gpu_name = gpu_device['name']
+                        if self._gpu_names_match(gpu_name, hardware_name):
+                            filtered_runs.append(run)
+                actual_data['runs_gpu'] = filtered_runs
+                
+                # Also filter gpu_selection.available_gpus to only include this GPU
+                if 'gpu_selection' in actual_data and 'available_gpus' in actual_data['gpu_selection']:
+                    filtered_gpus = []
+                    for gpu_device in actual_data['gpu_selection']['available_gpus']:
+                        gpu_name = gpu_device.get('name', '')
+                        if gpu_name and self._gpu_names_match(gpu_name, hardware_name):
+                            filtered_gpus.append(gpu_device)
+                    actual_data['gpu_selection']['available_gpus'] = filtered_gpus
+        
+        elif hardware_type == 'gpu' and benchmark_type == 'blender':
+            # For GPU hardware with blender benchmarks, filter device_runs to only include runs for this GPU
+            if 'device_runs' in actual_data:
+                filtered_runs = []
+                for run in actual_data['device_runs']:
+                    device_name = run.get('device_name')
+                    framework = run.get('device_framework')
+                    if device_name and framework and framework != 'CPU':
+                        if self._gpu_names_match(device_name, hardware_name):
+                            filtered_runs.append(run)
+                actual_data['device_runs'] = filtered_runs
+        
+        return filtered_data
 
     async def get_hardware_by_id(self, hardware_id: str) -> Optional[Hardware]:
         """Get hardware by ID"""

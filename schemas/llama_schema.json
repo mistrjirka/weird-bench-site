@@ -271,6 +271,25 @@
                 "type": "number",
                 "minimum": 0
               },
+              "gpu_device": {
+                "type": "object",
+                "description": "Information about the GPU device used for this benchmark run",
+                "properties": {
+                  "index": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "driver": {
+                    "type": "string"
+                  },
+                  "icd_path": {
+                    "type": ["string", "null"]
+                  }
+                }
+              },
               "metrics": {
                 "type": "object",
                 "required": ["system_info", "tokens_per_second", "total_time_ms"],
@@ -331,6 +350,42 @@
                   "type": "object"
                 }
               }
+            }
+          }
+        },
+        "gpu_selection": {
+          "type": "object",
+          "properties": {
+            "device_index": {
+              "type": ["integer", "null"],
+              "minimum": 0,
+              "description": "GGML_VULKAN_DEVICE index used for GPU selection"
+            },
+            "vk_driver_files": {
+              "type": ["string", "null"],
+              "description": "VK_DRIVER_FILES path used to force specific Vulkan driver"
+            },
+            "available_gpus": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "index": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "driver": {
+                    "type": "string"
+                  },
+                  "icd_path": {
+                    "type": ["string", "null"]
+                  }
+                }
+              },
+              "description": "List of detected Vulkan GPU devices"
             }
           }
         }

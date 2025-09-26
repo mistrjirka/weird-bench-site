@@ -236,7 +236,8 @@ export class HardwareDetail implements OnInit {
       elapsedSeconds: this.hardwareService.median(elapsedValues),
       tokensPerSecond: this.hardwareService.median(tokensPerSecValues),
       totalTokens: this.hardwareService.median(totalTokensVals),
-      compileTimeSeconds: this.hardwareType() === 'cpu' ? (data.median_values?.build_time_seconds || null) : null
+      compileTimeSeconds: this.hardwareType() === 'cpu' ? (data.median_values?.build_time_seconds || null) : null,
+      gpuSelection: data.median_values?.gpu_selection || null
     };
   }
 

@@ -107,6 +107,28 @@
                                         <p><strong>Type:</strong> {{ getBenchmarkSummary(benchmarkType).type }}</p>
                                         <p><strong>Prompt Size:</strong> {{ getBenchmarkSummary(benchmarkType).promptSize }} tokens</p>
                                         <p><strong>Generation Size:</strong> {{ getBenchmarkSummary(benchmarkType).generationSize }} tokens</p>
+                                        @if (getBenchmarkSummary(benchmarkType).gpuSelection) {
+                                          <div class="mt-2">
+                                            <p class="mb-1"><strong>GPU Selection:</strong></p>
+                                            @if (getBenchmarkSummary(benchmarkType).gpuSelection.device_index !== null && getBenchmarkSummary(benchmarkType).gpuSelection.device_index !== undefined) {
+                                              <p class="mb-1 small text-muted">Device Index: {{ getBenchmarkSummary(benchmarkType).gpuSelection.device_index }}</p>
+                                            }
+                                            @if (getBenchmarkSummary(benchmarkType).gpuSelection.vk_driver_files) {
+                                              <p class="mb-1 small text-muted">Driver: {{ getBenchmarkSummary(benchmarkType).gpuSelection.vk_driver_files }}</p>
+                                            }
+                                            @if (getBenchmarkSummary(benchmarkType).gpuSelection.available_gpus && getBenchmarkSummary(benchmarkType).gpuSelection.available_gpus.length > 0) {
+                                              <p class="mb-1 small text-muted">Available GPUs: {{ getBenchmarkSummary(benchmarkType).gpuSelection.available_gpus.length }}</p>
+                                              <details class="mt-1">
+                                                <summary class="small">Show GPU list</summary>
+                                                <ul class="small mt-1">
+                                                  @for (gpu of getBenchmarkSummary(benchmarkType).gpuSelection.available_gpus; track gpu.index) {
+                                                    <li>Device {{ gpu.index }}: {{ gpu.name }} ({{ gpu.driver }})</li>
+                                                  }
+                                                </ul>
+                                              </details>
+                                            }
+                                          </div>
+                                        }
                                       </div>
                                       <div class="col-md-6">
                                         <p><strong>Elapsed Time:</strong> {{ getBenchmarkSummary(benchmarkType).elapsedSeconds | number:'1.2-2' }}s</p>

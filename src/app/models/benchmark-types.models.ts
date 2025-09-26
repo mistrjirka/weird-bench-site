@@ -98,6 +98,7 @@ export interface LlamaResult {
   };
   runs_cpu?: LlamaCpuRun[];
   runs_gpu?: LlamaGpuRun[];
+  gpu_selection?: LlamaGpuSelection;
 }
 
 export interface LlamaCpuRun {
@@ -164,6 +165,19 @@ export interface LlamaProcessingMetrics {
   avg_time_ms: number;
   samples_ns: number[];
   samples_ts: number[];
+}
+
+export interface LlamaGpuSelection {
+  device_index?: number | null;
+  vk_driver_files?: string | null;
+  available_gpus?: LlamaGpuDevice[];
+}
+
+export interface LlamaGpuDevice {
+  index: number;
+  name: string;
+  driver: string;
+  icd_path?: string | null;
 }
 
 // Blender specific models
