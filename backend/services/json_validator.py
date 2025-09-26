@@ -50,8 +50,8 @@ class JsonValidator:
         
         # Prepare data for schema validation - handle wrapper structures
         schema_data = data
-        if benchmark_type == "7zip" and "results" in data:
-            # For 7zip, use the inner results object for schema validation
+        if (benchmark_type == "7zip" or benchmark_type == "blender") and "results" in data:
+            # For 7zip and blender, use the inner results object for schema validation
             schema_data = data["results"]
         
         try:
