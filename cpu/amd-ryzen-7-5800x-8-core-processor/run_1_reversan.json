@@ -1,0 +1,215 @@
+{
+  "benchmark_name": "reversan",
+  "timestamp": 1758990195.7836204,
+  "results": {
+    "meta": {
+      "benchmark_name": "reversan",
+      "host": "advantage",
+      "platform": "Linux-6.12.47-1-lts-x86_64-with-glibc2.42",
+      "timestamp": 1758990136.0423138,
+      "gnu_time": "/usr/bin/time",
+      "repo": "https://github.com/Saniel0/Reversan-Engine.git",
+      "test_runs_per_config": 1
+    },
+    "build": {
+      "binary": "/home/jirka/programovani/weird-bench-set/weird-bench/Reversan-Engine/reversan_avx2",
+      "compile_time_seconds": 2.648411018002662,
+      "config_time_seconds": 0.41309817600267706,
+      "build_time_seconds": 2.235312841999985,
+      "time_measurer": "GNU time -v",
+      "threads_supported": true,
+      "help_snippet": "Usage: reversan [MODE] [OPTIONS]\n\nModes:\n--help, -h                                Display this help message.\n--play                                    Play against the engine in terminal interface.\n--bot-vs-bot                              Start game where the engine plays against itself.\n--benchmark                               Run search on pre-defined state.\n\nAdditional Options:\n--depth, -d <1 - 49> [10]                           Set the engine's search depth.\n--engine, -e <negascout | alphabeta> [negascout]    Choose the tree search algorithm.\n--threads, -t, <1 - 8> [1]                          EXPERIMENTAL, negascout only.\n--disable-tp                                        Disables transposition tables.\n--order, -o <line_by_line | opt1 | opt2> [opt1]     Sets search order of the engine.\n--style, -s <basic | solarized | dracula> [basic]   Specify UI style.\n"
+    },
+    "runs_depth": [
+      {
+        "depth": 1,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 3560,
+          "user_seconds": 0.0,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 0.0
+        },
+        "stderr_tail": "ge unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 3560\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 153\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 0\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 2,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 3608,
+          "user_seconds": 0.0,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 0.0
+        },
+        "stderr_tail": "ge unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 3608\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 152\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 1\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 3,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 3600,
+          "user_seconds": 0.0,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 0.0
+        },
+        "stderr_tail": "ge unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 3600\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 153\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 0\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 4,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 3572,
+          "user_seconds": 0.0,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 0.0
+        },
+        "stderr_tail": "ge unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 3572\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 152\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 0\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 5,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 3700,
+          "user_seconds": 0.0,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 0.0
+        },
+        "stderr_tail": "ge unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 3700\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 153\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 1\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 6,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 3572,
+          "user_seconds": 0.01,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 0.0
+        },
+        "stderr_tail": "ge unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 3572\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 157\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 1\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 7,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 3616,
+          "user_seconds": 0.05,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 0.0
+        },
+        "stderr_tail": "ge unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 3616\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 173\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 5\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 8,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 4024,
+          "user_seconds": 0.07,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 0.0
+        },
+        "stderr_tail": "ge unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 4024\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 237\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 2\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 9,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 4720,
+          "user_seconds": 0.54,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 0.0
+        },
+        "stderr_tail": "ge unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 4720\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 560\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 4\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 10,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 5600,
+          "user_seconds": 1.0,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 1.0
+        },
+        "stderr_tail": "ge unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 5600\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 876\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 9\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 11,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 13988,
+          "user_seconds": 4.09,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 4.0
+        },
+        "stderr_tail": "unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 13988\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 2902\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 35\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "depth": 12,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 90980,
+          "user_seconds": 33.09,
+          "sys_seconds": 0.02,
+          "elapsed_seconds": 33.0
+        },
+        "stderr_tail": "shared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 90980\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 18433\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 238\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      }
+    ],
+    "runs_threads": [
+      {
+        "threads": 16,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 47352,
+          "user_seconds": 8.6,
+          "sys_seconds": 0.27,
+          "elapsed_seconds": 3.0
+        },
+        "stderr_tail": "ed data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 47352\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 11918\n\tVoluntary context switches: 47653\n\tInvoluntary context switches: 279\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "threads": 8,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 31860,
+          "user_seconds": 8.27,
+          "sys_seconds": 0.19,
+          "elapsed_seconds": 3.0
+        },
+        "stderr_tail": "red data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 31860\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 7424\n\tVoluntary context switches: 17909\n\tInvoluntary context switches: 217\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "threads": 4,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 24692,
+          "user_seconds": 7.12,
+          "sys_seconds": 0.04,
+          "elapsed_seconds": 3.0
+        },
+        "stderr_tail": "ared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 24692\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 5565\n\tVoluntary context switches: 5497\n\tInvoluntary context switches: 207\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "threads": 2,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 17272,
+          "user_seconds": 5.69,
+          "sys_seconds": 0.02,
+          "elapsed_seconds": 3.0
+        },
+        "stderr_tail": "hared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 17272\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 3693\n\tVoluntary context switches: 1042\n\tInvoluntary context switches: 61\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      },
+      {
+        "threads": 1,
+        "returncode": 0,
+        "metrics": {
+          "max_rss_kb": 13452,
+          "user_seconds": 4.1,
+          "sys_seconds": 0.0,
+          "elapsed_seconds": 4.0
+        },
+        "stderr_tail": "unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 13452\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 2902\n\tVoluntary context switches: 1\n\tInvoluntary context switches: 52\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 0\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+      }
+    ]
+  }
+}

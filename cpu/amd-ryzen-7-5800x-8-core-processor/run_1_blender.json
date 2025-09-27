@@ -1,0 +1,481 @@
+{
+  "benchmark_name": "blender",
+  "timestamp": 1758990797.3815453,
+  "results": {
+    "meta": {
+      "benchmark_name": "blender",
+      "host": "advantage",
+      "platform": "Linux-6.12.47-1-lts-x86_64-with-glibc2.42",
+      "timestamp": 1758990557.8994474,
+      "benchmark_url": "https://download.blender.org/release/BlenderBenchmark2.0/launcher/benchmark-launcher-cli-3.1.0-linux.tar.gz"
+    },
+    "build": {
+      "launcher_path": "/home/jirka/programovani/weird-bench-set/weird-bench/blender-benchmark/benchmark-launcher-cli",
+      "build_time_seconds": 0.0,
+      "notes": "Blender benchmark uses pre-built binaries"
+    },
+    "device_runs": [
+      {
+        "device_name": "AMD Ryzen 7 5800X 8-Core Processor",
+        "device_framework": "CPU",
+        "scenes": [
+          "monster",
+          "junkshop",
+          "classroom"
+        ],
+        "success": true,
+        "elapsed_seconds": 120.79776517299979,
+        "scene_results": {
+          "monster": {
+            "samples_per_minute": 114.59931510160096,
+            "scene_name": "monster"
+          },
+          "junkshop": {
+            "samples_per_minute": 75.80801871952676,
+            "scene_name": "junkshop"
+          },
+          "classroom": {
+            "samples_per_minute": 56.18987842638714,
+            "scene_name": "classroom"
+          }
+        },
+        "total_score": 246.59721224751488,
+        "raw_json": [
+          {
+            "timestamp": "2025-09-27T16:29:58.393733+00:00",
+            "blender_version": {
+              "version": "4.5.0",
+              "build_date": "2025-07-15",
+              "build_time": "01:36:28",
+              "build_commit_date": "2025-07-14",
+              "build_commit_time": "17:45",
+              "build_hash": "8cb6b388974a",
+              "label": "4.5.0",
+              "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+            },
+            "benchmark_launcher": {
+              "label": "3.1.0",
+              "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+            },
+            "benchmark_script": {
+              "label": "3.1.1",
+              "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+            },
+            "scene": {
+              "label": "monster",
+              "checksum": "8ff812a02f720433de1403dab447be9541eecca71cc919224a7790d017c1b2ce"
+            },
+            "system_info": {
+              "bitness": "64bit",
+              "machine": "x86_64",
+              "system": "Linux",
+              "dist_name": "Arch Linux",
+              "dist_version": "rolling",
+              "devices": [
+                {
+                  "type": "CPU",
+                  "name": "AMD Ryzen 7 5800X 8-Core Processor"
+                },
+                {
+                  "type": "OPTIX",
+                  "name": "NVIDIA GeForce RTX 3090",
+                  "is_display": false
+                }
+              ],
+              "num_cpu_sockets": 1,
+              "num_cpu_cores": 8,
+              "num_cpu_threads": 16
+            },
+            "device_info": {
+              "device_type": "CPU",
+              "compute_devices": [
+                {
+                  "type": "CPU",
+                  "name": "AMD Ryzen 7 5800X 8-Core Processor"
+                }
+              ],
+              "num_cpu_threads": 16
+            },
+            "stats": {
+              "device_peak_memory": 636.34,
+              "number_of_samples": 65,
+              "time_for_samples": 34.031617,
+              "samples_per_minute": 114.59931510160096,
+              "total_render_time": 35.1999,
+              "render_time_no_sync": 34.0317,
+              "time_limit": 30
+            }
+          },
+          {
+            "timestamp": "2025-09-27T16:30:42.281774+00:00",
+            "blender_version": {
+              "version": "4.5.0",
+              "build_date": "2025-07-15",
+              "build_time": "01:36:28",
+              "build_commit_date": "2025-07-14",
+              "build_commit_time": "17:45",
+              "build_hash": "8cb6b388974a",
+              "label": "4.5.0",
+              "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+            },
+            "benchmark_launcher": {
+              "label": "3.1.0",
+              "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+            },
+            "benchmark_script": {
+              "label": "3.1.1",
+              "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+            },
+            "scene": {
+              "label": "junkshop",
+              "checksum": "f5515a21a1337b908212d8d76733530df83014464a24c585ab7b96000da0cdce"
+            },
+            "system_info": {
+              "bitness": "64bit",
+              "machine": "x86_64",
+              "system": "Linux",
+              "dist_name": "Arch Linux",
+              "dist_version": "rolling",
+              "devices": [
+                {
+                  "type": "CPU",
+                  "name": "AMD Ryzen 7 5800X 8-Core Processor"
+                },
+                {
+                  "type": "OPTIX",
+                  "name": "NVIDIA GeForce RTX 3090",
+                  "is_display": false
+                }
+              ],
+              "num_cpu_sockets": 1,
+              "num_cpu_cores": 8,
+              "num_cpu_threads": 16
+            },
+            "device_info": {
+              "device_type": "CPU",
+              "compute_devices": [
+                {
+                  "type": "CPU",
+                  "name": "AMD Ryzen 7 5800X 8-Core Processor"
+                }
+              ],
+              "num_cpu_threads": 16
+            },
+            "stats": {
+              "device_peak_memory": 4762.35,
+              "number_of_samples": 39,
+              "time_for_samples": 30.867447,
+              "samples_per_minute": 75.80801871952676,
+              "total_render_time": 36.1101,
+              "render_time_no_sync": 30.8676,
+              "time_limit": 30
+            }
+          },
+          {
+            "timestamp": "2025-09-27T16:31:20.340098+00:00",
+            "blender_version": {
+              "version": "4.5.0",
+              "build_date": "2025-07-15",
+              "build_time": "01:36:28",
+              "build_commit_date": "2025-07-14",
+              "build_commit_time": "17:45",
+              "build_hash": "8cb6b388974a",
+              "label": "4.5.0",
+              "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+            },
+            "benchmark_launcher": {
+              "label": "3.1.0",
+              "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+            },
+            "benchmark_script": {
+              "label": "3.1.1",
+              "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+            },
+            "scene": {
+              "label": "classroom",
+              "checksum": "936f0a528f03eba291c67ea87743a0ebde58938fb87471b262721b89b46b875d"
+            },
+            "system_info": {
+              "bitness": "64bit",
+              "machine": "x86_64",
+              "system": "Linux",
+              "dist_name": "Arch Linux",
+              "dist_version": "rolling",
+              "devices": [
+                {
+                  "type": "CPU",
+                  "name": "AMD Ryzen 7 5800X 8-Core Processor"
+                },
+                {
+                  "type": "OPTIX",
+                  "name": "NVIDIA GeForce RTX 3090",
+                  "is_display": false
+                }
+              ],
+              "num_cpu_sockets": 1,
+              "num_cpu_cores": 8,
+              "num_cpu_threads": 16
+            },
+            "device_info": {
+              "device_type": "CPU",
+              "compute_devices": [
+                {
+                  "type": "CPU",
+                  "name": "AMD Ryzen 7 5800X 8-Core Processor"
+                }
+              ],
+              "num_cpu_threads": 16
+            },
+            "stats": {
+              "device_peak_memory": 648.57,
+              "number_of_samples": 33,
+              "time_for_samples": 35.237663,
+              "samples_per_minute": 56.18987842638714,
+              "total_render_time": 35.5386,
+              "render_time_no_sync": 35.238,
+              "time_limit": 30
+            }
+          }
+        ],
+        "raw_output": "[\n  {\n    \"timestamp\": \"2025-09-27T16:29:58.393733+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"monster\",\n      \"checksum\": \"8ff812a02f720433de1403dab447be9541eecca71cc919224a7790d017c1b2ce\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5800X 8-Core Processor\"\n        },\n        {\n          \"type\": \"OPTIX\",\n          \"name\": \"NVIDIA GeForce RTX 3090\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"CPU\",\n      \"compute_devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5800X 8-Core Processor\"\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 636.34,\n      \"number_of_samples\": 65,\n      \"time_for_samples\": 34.031617,\n      \"samples_per_minute\": 114.59931510160096,\n      \"total_render_time\": 35.1999,\n      \"render_time_no_sync\": 34.0317,\n      \"time_limit\": 30\n    }\n  },\n  {\n    \"timestamp\": \"2025-09-27T16:30:42.281774+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"junkshop\",\n      \"checksum\": \"f5515a21a1337b908212d8d76733530df83014464a24c585ab7b96000da0cdce\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5800X 8-Core Processor\"\n        },\n        {\n          \"type\": \"OPTIX\",\n          \"name\": \"NVIDIA GeForce RTX 3090\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"CPU\",\n      \"compute_devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5800X 8-Core Processor\"\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 4762.35,\n      \"number_of_samples\": 39,\n      \"time_for_samples\": 30.867447,\n      \"samples_per_minute\": 75.80801871952676,\n      \"total_render_time\": 36.1101,\n      \"render_time_no_sync\": 30.8676,\n      \"time_limit\": 30\n    }\n  },\n  {\n    \"timestamp\": \"2025-09-27T16:31:20.340098+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"classroom\",\n      \"checksum\": \"936f0a528f03eba291c67ea87743a0ebde58938fb87471b262721b89b46b875d\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5800X 8-Core Processor\"\n        },\n        {\n          \"type\": \"OPTIX\",\n          \"name\": \"NVIDIA GeForce RTX 3090\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"CPU\",\n      \"compute_devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5800X 8-Core Processor\"\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 648.57,\n      \"number_of_samples\": 33,\n      \"time_for_samples\": 35.237663,\n      \"samples_per_minute\": 56.18987842638714,\n      \"total_render_time\": 35.5386,\n      \"render_time_no_sync\": 35.238,\n      \"time_limit\": 30\n    }\n  }\n]\n",
+        "attempts_made": 1
+      },
+      {
+        "device_name": "NVIDIA GeForce RTX 3090",
+        "device_framework": "OPTIX",
+        "scenes": [
+          "monster",
+          "junkshop",
+          "classroom"
+        ],
+        "success": true,
+        "elapsed_seconds": 116.36776320599893,
+        "scene_results": {
+          "monster": {
+            "samples_per_minute": 2661.488683002066,
+            "scene_name": "monster"
+          },
+          "junkshop": {
+            "samples_per_minute": 1711.8069858483973,
+            "scene_name": "junkshop"
+          },
+          "classroom": {
+            "samples_per_minute": 1491.1905831734819,
+            "scene_name": "classroom"
+          }
+        },
+        "total_score": 5864.486252023946,
+        "raw_json": [
+          {
+            "timestamp": "2025-09-27T16:32:00.817847+00:00",
+            "blender_version": {
+              "version": "4.5.0",
+              "build_date": "2025-07-15",
+              "build_time": "01:36:28",
+              "build_commit_date": "2025-07-14",
+              "build_commit_time": "17:45",
+              "build_hash": "8cb6b388974a",
+              "label": "4.5.0",
+              "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+            },
+            "benchmark_launcher": {
+              "label": "3.1.0",
+              "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+            },
+            "benchmark_script": {
+              "label": "3.1.1",
+              "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+            },
+            "scene": {
+              "label": "monster",
+              "checksum": "8ff812a02f720433de1403dab447be9541eecca71cc919224a7790d017c1b2ce"
+            },
+            "system_info": {
+              "bitness": "64bit",
+              "machine": "x86_64",
+              "system": "Linux",
+              "dist_name": "Arch Linux",
+              "dist_version": "rolling",
+              "devices": [
+                {
+                  "type": "CPU",
+                  "name": "AMD Ryzen 7 5800X 8-Core Processor"
+                },
+                {
+                  "type": "OPTIX",
+                  "name": "NVIDIA GeForce RTX 3090",
+                  "is_display": false
+                }
+              ],
+              "num_cpu_sockets": 1,
+              "num_cpu_cores": 8,
+              "num_cpu_threads": 16
+            },
+            "device_info": {
+              "device_type": "OPTIX",
+              "compute_devices": [
+                {
+                  "type": "OPTIX",
+                  "name": "NVIDIA GeForce RTX 3090",
+                  "is_display": false
+                }
+              ],
+              "num_cpu_threads": 16
+            },
+            "stats": {
+              "device_peak_memory": 1286.06,
+              "number_of_samples": 1537,
+              "time_for_samples": 34.649781,
+              "samples_per_minute": 2661.488683002066,
+              "total_render_time": 36.078,
+              "render_time_no_sync": 34.6499,
+              "time_limit": 30
+            }
+          },
+          {
+            "timestamp": "2025-09-27T16:32:43.770764+00:00",
+            "blender_version": {
+              "version": "4.5.0",
+              "build_date": "2025-07-15",
+              "build_time": "01:36:28",
+              "build_commit_date": "2025-07-14",
+              "build_commit_time": "17:45",
+              "build_hash": "8cb6b388974a",
+              "label": "4.5.0",
+              "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+            },
+            "benchmark_launcher": {
+              "label": "3.1.0",
+              "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+            },
+            "benchmark_script": {
+              "label": "3.1.1",
+              "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+            },
+            "scene": {
+              "label": "junkshop",
+              "checksum": "f5515a21a1337b908212d8d76733530df83014464a24c585ab7b96000da0cdce"
+            },
+            "system_info": {
+              "bitness": "64bit",
+              "machine": "x86_64",
+              "system": "Linux",
+              "dist_name": "Arch Linux",
+              "dist_version": "rolling",
+              "devices": [
+                {
+                  "type": "CPU",
+                  "name": "AMD Ryzen 7 5800X 8-Core Processor"
+                },
+                {
+                  "type": "OPTIX",
+                  "name": "NVIDIA GeForce RTX 3090",
+                  "is_display": false
+                }
+              ],
+              "num_cpu_sockets": 1,
+              "num_cpu_cores": 8,
+              "num_cpu_threads": 16
+            },
+            "device_info": {
+              "device_type": "OPTIX",
+              "compute_devices": [
+                {
+                  "type": "OPTIX",
+                  "name": "NVIDIA GeForce RTX 3090",
+                  "is_display": false
+                }
+              ],
+              "num_cpu_threads": 16
+            },
+            "stats": {
+              "device_peak_memory": 4839.45,
+              "number_of_samples": 858,
+              "time_for_samples": 30.073484,
+              "samples_per_minute": 1711.8069858483973,
+              "total_render_time": 35.5481,
+              "render_time_no_sync": 30.0736,
+              "time_limit": 30
+            }
+          },
+          {
+            "timestamp": "2025-09-27T16:33:17.304148+00:00",
+            "blender_version": {
+              "version": "4.5.0",
+              "build_date": "2025-07-15",
+              "build_time": "01:36:28",
+              "build_commit_date": "2025-07-14",
+              "build_commit_time": "17:45",
+              "build_hash": "8cb6b388974a",
+              "label": "4.5.0",
+              "checksum": "1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec"
+            },
+            "benchmark_launcher": {
+              "label": "3.1.0",
+              "checksum": "d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9"
+            },
+            "benchmark_script": {
+              "label": "3.1.1",
+              "checksum": "5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f"
+            },
+            "scene": {
+              "label": "classroom",
+              "checksum": "936f0a528f03eba291c67ea87743a0ebde58938fb87471b262721b89b46b875d"
+            },
+            "system_info": {
+              "bitness": "64bit",
+              "machine": "x86_64",
+              "system": "Linux",
+              "dist_name": "Arch Linux",
+              "dist_version": "rolling",
+              "devices": [
+                {
+                  "type": "CPU",
+                  "name": "AMD Ryzen 7 5800X 8-Core Processor"
+                },
+                {
+                  "type": "OPTIX",
+                  "name": "NVIDIA GeForce RTX 3090",
+                  "is_display": false
+                }
+              ],
+              "num_cpu_sockets": 1,
+              "num_cpu_cores": 8,
+              "num_cpu_threads": 16
+            },
+            "device_info": {
+              "device_type": "OPTIX",
+              "compute_devices": [
+                {
+                  "type": "OPTIX",
+                  "name": "NVIDIA GeForce RTX 3090",
+                  "is_display": false
+                }
+              ],
+              "num_cpu_threads": 16
+            },
+            "stats": {
+              "device_peak_memory": 1366,
+              "number_of_samples": 769,
+              "time_for_samples": 30.941719,
+              "samples_per_minute": 1491.1905831734819,
+              "total_render_time": 31.5343,
+              "render_time_no_sync": 30.9418,
+              "time_limit": 30
+            }
+          }
+        ],
+        "raw_output": "[\n  {\n    \"timestamp\": \"2025-09-27T16:32:00.817847+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"monster\",\n      \"checksum\": \"8ff812a02f720433de1403dab447be9541eecca71cc919224a7790d017c1b2ce\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5800X 8-Core Processor\"\n        },\n        {\n          \"type\": \"OPTIX\",\n          \"name\": \"NVIDIA GeForce RTX 3090\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"OPTIX\",\n      \"compute_devices\": [\n        {\n          \"type\": \"OPTIX\",\n          \"name\": \"NVIDIA GeForce RTX 3090\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 1286.06,\n      \"number_of_samples\": 1537,\n      \"time_for_samples\": 34.649781,\n      \"samples_per_minute\": 2661.488683002066,\n      \"total_render_time\": 36.078,\n      \"render_time_no_sync\": 34.6499,\n      \"time_limit\": 30\n    }\n  },\n  {\n    \"timestamp\": \"2025-09-27T16:32:43.770764+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"junkshop\",\n      \"checksum\": \"f5515a21a1337b908212d8d76733530df83014464a24c585ab7b96000da0cdce\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5800X 8-Core Processor\"\n        },\n        {\n          \"type\": \"OPTIX\",\n          \"name\": \"NVIDIA GeForce RTX 3090\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"OPTIX\",\n      \"compute_devices\": [\n        {\n          \"type\": \"OPTIX\",\n          \"name\": \"NVIDIA GeForce RTX 3090\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 4839.45,\n      \"number_of_samples\": 858,\n      \"time_for_samples\": 30.073484,\n      \"samples_per_minute\": 1711.8069858483973,\n      \"total_render_time\": 35.5481,\n      \"render_time_no_sync\": 30.0736,\n      \"time_limit\": 30\n    }\n  },\n  {\n    \"timestamp\": \"2025-09-27T16:33:17.304148+00:00\",\n    \"blender_version\": {\n      \"version\": \"4.5.0\",\n      \"build_date\": \"2025-07-15\",\n      \"build_time\": \"01:36:28\",\n      \"build_commit_date\": \"2025-07-14\",\n      \"build_commit_time\": \"17:45\",\n      \"build_hash\": \"8cb6b388974a\",\n      \"label\": \"4.5.0\",\n      \"checksum\": \"1188b95cc12321c770b631939f7c25a096910b6f884a990bf9c0f62d52b38aec\"\n    },\n    \"benchmark_launcher\": {\n      \"label\": \"3.1.0\",\n      \"checksum\": \"d2504fddc513b6b1ccbf18cb75aa381d21a543fe4662d790f24aa7275fa255e9\"\n    },\n    \"benchmark_script\": {\n      \"label\": \"3.1.1\",\n      \"checksum\": \"5a706e14279da13b2bed2dbb9e0a47c2588b9ea4f37cf8f9c7d79c8b7c634c1f\"\n    },\n    \"scene\": {\n      \"label\": \"classroom\",\n      \"checksum\": \"936f0a528f03eba291c67ea87743a0ebde58938fb87471b262721b89b46b875d\"\n    },\n    \"system_info\": {\n      \"bitness\": \"64bit\",\n      \"machine\": \"x86_64\",\n      \"system\": \"Linux\",\n      \"dist_name\": \"Arch Linux\",\n      \"dist_version\": \"rolling\",\n      \"devices\": [\n        {\n          \"type\": \"CPU\",\n          \"name\": \"AMD Ryzen 7 5800X 8-Core Processor\"\n        },\n        {\n          \"type\": \"OPTIX\",\n          \"name\": \"NVIDIA GeForce RTX 3090\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_sockets\": 1,\n      \"num_cpu_cores\": 8,\n      \"num_cpu_threads\": 16\n    },\n    \"device_info\": {\n      \"device_type\": \"OPTIX\",\n      \"compute_devices\": [\n        {\n          \"type\": \"OPTIX\",\n          \"name\": \"NVIDIA GeForce RTX 3090\",\n          \"is_display\": false\n        }\n      ],\n      \"num_cpu_threads\": 16\n    },\n    \"stats\": {\n      \"device_peak_memory\": 1366,\n      \"number_of_samples\": 769,\n      \"time_for_samples\": 30.941719,\n      \"samples_per_minute\": 1491.1905831734819,\n      \"total_render_time\": 31.5343,\n      \"render_time_no_sync\": 30.9418,\n      \"time_limit\": 30\n    }\n  }\n]\n",
+        "attempts_made": 1,
+        "cpu_speedup": 23.781640508318628
+      }
+    ],
+    "scenes_tested": [
+      "monster",
+      "junkshop",
+      "classroom"
+    ],
+    "successful_runs": 2,
+    "total_devices_tested": 2
+  }
+}

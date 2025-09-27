@@ -1,0 +1,254 @@
+{
+  "benchmark_name": "llama",
+  "timestamp": 1759001022.0600755,
+  "results": {
+    "runs_cpu": [
+      {
+        "type": "cpu",
+        "prompt_size": 512,
+        "generation_size": 64,
+        "ngl": 0,
+        "returncode": 0,
+        "elapsed_seconds": 52.27911408199998,
+        "metrics": {
+          "system_info": {
+            "cpu_info": "AMD Ryzen 7 5800X 8-Core Processor",
+            "gpu_info": "",
+            "backends": "CPU",
+            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+            "model_size": 2375386624,
+            "model_n_params": 4022468096,
+            "n_threads": 8,
+            "n_gpu_layers": 99
+          },
+          "prompt_processing": {
+            "avg_time_ns": 5147308807,
+            "avg_tokens_per_sec": 99.59403,
+            "stddev_time_ns": 205352501,
+            "stddev_tokens_per_sec": 3.904901,
+            "avg_time_ms": 5147.308807,
+            "samples_ns": [
+              5453340466,
+              5134238695,
+              4955210226,
+              5225064339,
+              4968690313
+            ],
+            "samples_ts": [
+              93.8874,
+              99.7227,
+              103.326,
+              97.9892,
+              103.045
+            ]
+          },
+          "generation": {
+            "avg_time_ns": 4073991684,
+            "avg_tokens_per_sec": 15.731316,
+            "stddev_time_ns": 170759159,
+            "stddev_tokens_per_sec": 0.653673,
+            "avg_time_ms": 4073.991684,
+            "samples_ns": [
+              3884539604,
+              4129120217,
+              4103419484,
+              3937579882,
+              4315299234
+            ],
+            "samples_ts": [
+              16.4756,
+              15.4997,
+              15.5967,
+              16.2536,
+              14.831
+            ]
+          },
+          "tokens_per_second": 15.731316,
+          "total_time_ms": 9221.300491
+        },
+        "essential_info": {
+          "build_commit": "4807e8f",
+          "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+          "backends": "CPU",
+          "test_time": "2025-09-27T19:22:34Z"
+        }
+      }
+    ],
+    "runs_gpu": [
+      {
+        "type": "gpu",
+        "prompt_size": 512,
+        "generation_size": 512,
+        "ngl": 99,
+        "returncode": 0,
+        "elapsed_seconds": 16.123946918,
+        "metrics": {
+          "system_info": {
+            "cpu_info": "AMD Ryzen 7 5800X 8-Core Processor",
+            "gpu_info": "NVIDIA GeForce RTX 3090",
+            "backends": "Vulkan",
+            "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+            "model_size": 2375386624,
+            "model_n_params": 4022468096,
+            "n_threads": 8,
+            "n_gpu_layers": 99
+          },
+          "prompt_processing": {
+            "avg_time_ns": 92685281,
+            "avg_tokens_per_sec": 5553.702731,
+            "stddev_time_ns": 7551190,
+            "stddev_tokens_per_sec": 455.086721,
+            "avg_time_ms": 92.685281,
+            "samples_ns": [
+              101672200,
+              97858824,
+              93915658,
+              85536982,
+              84442742
+            ],
+            "samples_ts": [
+              5035.79,
+              5232.03,
+              5451.7,
+              5985.72,
+              6063.28
+            ]
+          },
+          "generation": {
+            "avg_time_ns": 2791543306,
+            "avg_tokens_per_sec": 183.622524,
+            "stddev_time_ns": 106487045,
+            "stddev_tokens_per_sec": 6.928993,
+            "avg_time_ms": 2791.543306,
+            "samples_ns": [
+              2917806486,
+              2705607740,
+              2893694395,
+              2693418141,
+              2747189772
+            ],
+            "samples_ts": [
+              175.474,
+              189.237,
+              176.936,
+              190.093,
+              186.372
+            ]
+          },
+          "tokens_per_second": 183.622524,
+          "total_time_ms": 2884.228587
+        },
+        "essential_info": {
+          "build_commit": "4807e8f",
+          "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+          "backends": "Vulkan",
+          "test_time": "2025-09-27T19:23:27Z"
+        },
+        "gpu_device": {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 3090",
+          "driver": "NVIDIA",
+          "icd_path": null
+        }
+      }
+    ],
+    "device_runs": [
+      {
+        "device_name": "NVIDIA GeForce RTX 3090",
+        "device_index": 0,
+        "device_driver": "NVIDIA",
+        "device_type": "gpu",
+        "runs": [
+          {
+            "prompt_size": 512,
+            "generation_size": 512,
+            "ngl": 99,
+            "returncode": 0,
+            "elapsed_seconds": 16.123946918,
+            "success": true,
+            "metrics": {
+              "system_info": {
+                "cpu_info": "AMD Ryzen 7 5800X 8-Core Processor",
+                "gpu_info": "NVIDIA GeForce RTX 3090",
+                "backends": "Vulkan",
+                "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+                "model_size": 2375386624,
+                "model_n_params": 4022468096,
+                "n_threads": 8,
+                "n_gpu_layers": 99
+              },
+              "prompt_processing": {
+                "avg_time_ns": 92685281,
+                "avg_tokens_per_sec": 5553.702731,
+                "stddev_time_ns": 7551190,
+                "stddev_tokens_per_sec": 455.086721,
+                "avg_time_ms": 92.685281,
+                "samples_ns": [
+                  101672200,
+                  97858824,
+                  93915658,
+                  85536982,
+                  84442742
+                ],
+                "samples_ts": [
+                  5035.79,
+                  5232.03,
+                  5451.7,
+                  5985.72,
+                  6063.28
+                ]
+              },
+              "generation": {
+                "avg_time_ns": 2791543306,
+                "avg_tokens_per_sec": 183.622524,
+                "stddev_time_ns": 106487045,
+                "stddev_tokens_per_sec": 6.928993,
+                "avg_time_ms": 2791.543306,
+                "samples_ns": [
+                  2917806486,
+                  2705607740,
+                  2893694395,
+                  2693418141,
+                  2747189772
+                ],
+                "samples_ts": [
+                  175.474,
+                  189.237,
+                  176.936,
+                  190.093,
+                  186.372
+                ]
+              },
+              "tokens_per_second": 183.622524,
+              "total_time_ms": 2884.228587
+            },
+            "essential_info": {
+              "build_commit": "4807e8f",
+              "model_type": "qwen3 4B IQ4_NL - 4.5 bpw",
+              "backends": "Vulkan",
+              "test_time": "2025-09-27T19:23:27Z"
+            }
+          }
+        ],
+        "success": true
+      }
+    ],
+    "gpu_selection": {
+      "device_index": null,
+      "vk_driver_files": null,
+      "available_gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 3090",
+          "driver": "NVIDIA",
+          "icd_path": null
+        }
+      ]
+    },
+    "cpu_build_timing": {
+      "config_time_seconds": 0.9369591810000202,
+      "build_time_seconds": 79.96951655400017,
+      "total_time_seconds": 80.90647573500019
+    }
+  }
+}

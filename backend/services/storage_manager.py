@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import re
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple, Union
 from pathlib import Path
@@ -240,12 +241,12 @@ class StorageManager:
         return self._gpu_names_match_single(gpu_name, hardware_name)
     
     def _gpu_names_match_single(self, gpu_name: str, hardware_name: str) -> bool:
-        """Check if two single GPU names match with exact matching for multi-GPU scenarios"""
+        """Check if two single GPU names match with fuzzy matching for generic/specific names"""
         if not gpu_name or not hardware_name:
             return False
         
         def normalize_gpu_name(name: str) -> str:
-            """Normalize GPU name for comparison while preserving important distinctions"""
+            """Normalize GPU name for comparison"""
             # Convert to lowercase and normalize whitespace
             name = name.lower().strip()
             name = ' '.join(name.split())  # Normalize whitespace
@@ -265,9 +266,55 @@ class StorageManager:
         normalized_gpu = normalize_gpu_name(gpu_name)
         normalized_hardware = normalize_gpu_name(hardware_name)
         
-        # Exact match after normalization - this is crucial for multi-GPU scenarios
-        # We want "RTX 3060" to NOT match "RTX 3060 Ti"
-        return normalized_gpu == normalized_hardware
+        # Exact match after normalization - preferred
+        if normalized_gpu == normalized_hardware:
+            return True
+        
+        # Fuzzy matching for generic/specific name pairs
+        return self._fuzzy_gpu_match(normalized_gpu, normalized_hardware)
+    
+    def _fuzzy_gpu_match(self, gpu_name: str, hardware_name: str) -> bool:
+        """Fuzzy matching for GPU names to handle generic vs specific naming"""
+        
+        # Handle AMD Radeon generic vs specific cases
+        if 'radeon' in gpu_name and 'radeon' in hardware_name:
+            # "radeon graphics" should match any specific Radeon GPU
+            if (gpu_name in ['radeon graphics', 'radeon'] and 
+                'radeon' in hardware_name and len(hardware_name) > len('radeon')):
+                return True
+            # Specific Radeon should match "radeon graphics" 
+            if (hardware_name in ['radeon graphics', 'radeon'] and 
+                'radeon' in gpu_name and len(gpu_name) > len('radeon')):
+                return True
+            # Both contain radeon + model numbers/letters - check if they're similar
+            if any(char.isdigit() for char in gpu_name + hardware_name):
+                # Extract model numbers/identifiers
+                gpu_models = set(re.findall(r'\b\d+[a-z]*\b', gpu_name))
+                hardware_models = set(re.findall(r'\b\d+[a-z]*\b', hardware_name))
+                if gpu_models & hardware_models:  # Common model numbers
+                    return True
+        
+        # Handle Intel Graphics generic vs specific cases  
+        if 'graphics' in gpu_name and 'graphics' in hardware_name and 'intel' in (gpu_name + hardware_name):
+            # "graphics" or "intel graphics" should match specific Intel GPUs
+            generic_patterns = ['graphics', 'intel graphics', 'hd graphics', 'uhd graphics']
+            if (gpu_name in generic_patterns and len(hardware_name) > max(len(p) for p in generic_patterns)) or \
+               (hardware_name in generic_patterns and len(gpu_name) > max(len(p) for p in generic_patterns)):
+                return True
+        
+        # Handle NVIDIA cases
+        if any(brand in gpu_name + hardware_name for brand in ['rtx', 'gtx', 'nvidia']):
+            # Extract model numbers
+            gpu_models = set(re.findall(r'\b(?:rtx|gtx)\s*\d+[a-z]*(?:\s*ti)?\b', gpu_name))
+            hardware_models = set(re.findall(r'\b(?:rtx|gtx)\s*\d+[a-z]*(?:\s*ti)?\b', hardware_name))
+            if gpu_models & hardware_models:
+                return True
+        
+        return False
+    
+    def _gpu_names_match_with_fallback(self, gpu_name: str, hardware_name: str, all_gpu_entries: list) -> bool:
+        """GPU name matching - for now just use normal matching without fallback"""
+        return self._gpu_names_match_single(gpu_name, hardware_name)
 
     def _process_llama_data(self, data_list: List[Dict], hardware_type: str, hardware_name: str) -> ProcessedBenchmarkData:
         """Process Llama benchmark data"""
@@ -825,9 +872,10 @@ class StorageManager:
             if benchmark_type == 'llama':
                 # Priority 1: Check new device_runs format for GPU entries
                 if 'device_runs' in actual_data:
-                    for device_run in actual_data['device_runs']:
+                    device_runs = actual_data['device_runs']
+                    for device_run in device_runs:
                         if (device_run.get('device_type') == 'gpu' and 
-                            self._gpu_names_match_single(device_run.get('device_name', ''), hardware_name)):
+                            self._gpu_names_match_with_fallback(device_run.get('device_name', ''), hardware_name, device_runs)):
                             return True
                     # If no matching device_runs found, continue to legacy check
                 
@@ -837,9 +885,10 @@ class StorageManager:
                     gpu_selection = actual_data.get('gpu_selection')
                     if gpu_selection and gpu_selection.get('available_gpus'):
                         # Check if any of the available GPUs match this hardware entry
-                        for gpu_device in gpu_selection['available_gpus']:
+                        available_gpus = gpu_selection['available_gpus']
+                        for gpu_device in available_gpus:
                             gpu_name = gpu_device.get('name', '')
-                            if gpu_name and self._gpu_names_match_single(gpu_name, hardware_name):
+                            if gpu_name and self._gpu_names_match_with_fallback(gpu_name, hardware_name, available_gpus):
                                 return True
                         return False
                     else:
