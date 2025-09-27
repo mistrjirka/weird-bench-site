@@ -64,9 +64,9 @@ export class CompareComponent implements OnInit {
     this.router.navigateByUrl('/hardware');
   }
 
-  private computeDetails(): Array<{ name: string; left: number; right: number; unit: string; improvement: number; higherIsBetter: boolean }>
+  private computeDetails(): Array<{ name: string; left: number; right: number; unit: string; improvement: number; higherIsBetter: boolean; weight?: number }>
   {
-    const result: Array<{ name: string; left: number; right: number; unit: string; improvement: number; higherIsBetter: boolean }> = [];
+    const result: Array<{ name: string; left: number; right: number; unit: string; improvement: number; higherIsBetter: boolean; weight?: number }> = [];
     const type = this.type();
     if (!type) return result;
     const left = this.leftBench();
@@ -76,17 +76,32 @@ export class CompareComponent implements OnInit {
     for (const name of candidates) {
       if (name === 'reversan') {
         // Compare depth groups using time (lower is better)
+        // Only include depths where both CPUs have results > 0.1s
         const leftDepth = this.reversanDepthTimeMap(left[name]);
         const rightDepth = this.reversanDepthTimeMap(right[name]);
         const depths = Array.from(new Set([...leftDepth.keys(), ...rightDepth.keys()])).sort((a, b) => a - b);
-        const common = depths.filter(d => leftDepth.has(d) && rightDepth.has(d));
-        for (const d of common) {
+        const validDepths = depths.filter(d => {
+          const lv = leftDepth.get(d);
+          const rv = rightDepth.get(d);
+          return lv && rv && lv > 0.1 && rv > 0.1;
+        });
+        
+        const weightPerDepth = validDepths.length > 0 ? 1 / validDepths.length : 0;
+        for (const d of validDepths) {
           const lv = leftDepth.get(d)!;
           const rv = rightDepth.get(d)!;
           const improvement = this.percentImprovement(lv, rv, false);
-          result.push({ name: `reversan depth ${d}`, left: lv, right: rv, unit: 's', improvement, higherIsBetter: false });
+          result.push({ 
+            name: `reversan depth ${d}`, 
+            left: lv, 
+            right: rv, 
+            unit: 's', 
+            improvement, 
+            higherIsBetter: false,
+            weight: weightPerDepth
+          });
         }
-        // Best thread group (min seconds)
+        // Best thread group (min seconds) - weight 1
         const lbest = this.reversanBestThreadsTime(left[name]);
         const rbest = this.reversanBestThreadsTime(right[name]);
         if (lbest && rbest) {
@@ -97,17 +112,51 @@ export class CompareComponent implements OnInit {
             right: rbest.value,
             unit: 's',
             improvement,
-            higherIsBetter: false
+            higherIsBetter: false,
+            weight: 1
+          });
+        }
+        continue;
+      }
+      
+      // Add individual scene comparisons for Blender (both CPU and GPU)
+      if (name === 'blender') {
+        const leftScenes = this.blenderSceneMap(left[name]);
+        const rightScenes = this.blenderSceneMap(right[name]);
+        const commonScenes = Array.from(leftScenes.keys()).filter(s => rightScenes.has(s));
+        
+        const weightPerScene = commonScenes.length > 0 ? 1 / commonScenes.length : 0;
+        for (const scene of commonScenes) {
+          const lv = leftScenes.get(scene)!;
+          const rv = rightScenes.get(scene)!;
+          const improvement = this.percentImprovement(lv, rv, true);
+          result.push({ 
+            name: `blender ${scene}`, 
+            left: lv, 
+            right: rv, 
+            unit: 'SPM', 
+            improvement, 
+            higherIsBetter: true,
+            weight: weightPerScene
           });
         }
         continue;
       }
       if (name === 'llama' && type === 'cpu') {
+        // Add token speed comparison for CPU
+        const leftTps = this.llamaTokenSpeed(left[name]);
+        const rightTps = this.llamaTokenSpeed(right[name]);
+        if (leftTps !== null && rightTps !== null) {
+          const improvement = this.percentImprovement(leftTps, rightTps, true);
+          result.push({ name: 'llama token speed', left: leftTps, right: rightTps, unit: 'tok/s', improvement, higherIsBetter: true, weight: 1 });
+        }
+        
+        // Add compile time comparison if available
         const lc = this.llamaCompile(left[name]);
         const rc = this.llamaCompile(right[name]);
         if (lc !== null && rc !== null) {
           const improvement = this.percentImprovement(lc, rc, false);
-          result.push({ name: 'llama compile', left: lc, right: rc, unit: 's', improvement, higherIsBetter: false });
+          result.push({ name: 'llama compile', left: lc, right: rc, unit: 's', improvement, higherIsBetter: false, weight: 1 });
         }
       }
       const leftVal = this.extractMetric(name, left[name]);
@@ -116,7 +165,7 @@ export class CompareComponent implements OnInit {
       const { value: lv, unit, higherIsBetter } = leftVal;
       const { value: rv } = rightVal;
       const improvement = this.percentImprovement(lv, rv, higherIsBetter);
-      result.push({ name, left: lv, right: rv, unit, improvement, higherIsBetter });
+      result.push({ name, left: lv, right: rv, unit, improvement, higherIsBetter, weight: 1 });
     }
     return result;
   }
@@ -125,7 +174,18 @@ export class CompareComponent implements OnInit {
     const rowsAll = this.details();
     const rows = rowsAll;
     if (rows.length === 0) return null;
-    const avg = rows.reduce((s, r) => s + r.improvement, 0) / rows.length;
+    
+    // Calculate weighted average if weights are provided, otherwise equal weights
+    let totalImprovement = 0;
+    let totalWeight = 0;
+    
+    for (const row of rows) {
+      const weight = row.weight ?? 1; // Default weight of 1 if not specified
+      totalImprovement += row.improvement * weight;
+      totalWeight += weight;
+    }
+    
+    const avg = totalWeight > 0 ? totalImprovement / totalWeight : 0;
     const better = avg > 0 ? 'faster' : 'slower';
     const left = this.leftName();
     const right = this.rightName();
@@ -142,14 +202,29 @@ export class CompareComponent implements OnInit {
         return { value: v, unit: 'tok/s', higherIsBetter: true };
       }
       case 'blender': {
-        // Use median of all samples_per_minute values across scenes (higher is better)
-        const vals = (data.data_points || []).map(dp => (dp as any)['samples_per_minute_median']).filter((v: any) => typeof v === 'number');
-        const v = this.data.median(vals);
-        if (typeof v !== 'number') return null;
-        return { value: v, unit: 'SPM', higherIsBetter: true };
+        // Compare each scene individually with weight 1/number_of_scenes
+        const rightData = this.rightBench()[name];
+        if (!rightData) return null;
+        
+        const leftScenes = this.blenderSceneMap(data);
+        const rightScenes = this.blenderSceneMap(rightData);
+        if (leftScenes.size === 0 || rightScenes.size === 0) return null;
+        
+        const commonScenes = Array.from(leftScenes.keys()).filter(s => rightScenes.has(s));
+        if (commonScenes.length === 0) return null;
+        
+        // For overall metric, use median across common scenes
+        const leftVals = commonScenes.map(s => leftScenes.get(s)!);
+        const rightVals = commonScenes.map(s => rightScenes.get(s)!);
+        const leftMedian = this.data.median(leftVals);
+        const rightMedian = this.data.median(rightVals);
+        if (typeof leftMedian !== 'number' || typeof rightMedian !== 'number') return null;
+        
+        return { value: leftMedian, unit: 'SPM', higherIsBetter: true };
       }
       case '7zip': {
-        // Use best (lowest) time across thread groups (lower is better)
+        // Use best (lowest) compression time across thread groups (lower is better)
+        // This compares the fastest compression time each CPU can achieve
         const vals = (data.data_points || []).map(dp => (dp as any)['elapsed_seconds_median']).filter((v: any) => typeof v === 'number');
         if (!vals.length) return null;
         const v = Math.min(...vals);
@@ -204,6 +279,24 @@ export class CompareComponent implements OnInit {
   private llamaCompile(data: ProcessedBenchmarkData): number | null {
     const t = data.median_values?.['build_time_seconds'];
     return typeof t === 'number' ? t : null;
+  }
+
+  private llamaTokenSpeed(data: ProcessedBenchmarkData): number | null {
+    const vals = (data.data_points || []).map(dp => dp.tokens_per_second_median).filter((v: any) => typeof v === 'number');
+    const v = this.data.median(vals);
+    return typeof v === 'number' ? v : null;
+  }
+
+  private blenderSceneMap(data: ProcessedBenchmarkData): Map<string, number> {
+    const sceneMap = new Map<string, number>();
+    for (const dp of data.data_points || []) {
+      const scene = (dp as any).scene;
+      const spm = (dp as any).samples_per_minute_median;
+      if (typeof scene === 'string' && typeof spm === 'number') {
+        sceneMap.set(scene, spm);
+      }
+    }
+    return sceneMap;
   }
 
   private percentImprovement(left: number, right: number, higherIsBetter: boolean): number {

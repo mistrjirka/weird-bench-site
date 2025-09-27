@@ -280,8 +280,14 @@ class StorageManager:
             
             if hardware_type == "cpu":
                 runs = actual_data.get("runs_cpu", [])
-                build_info = actual_data.get("build", {}).get("cpu_build_timing", {})
-                if "build_time_seconds" in build_info:
+                all_runs.extend(runs)
+                # Try different build timing structures
+                build_info = actual_data.get("build", {})
+                if "cpu_build_timing" in build_info:
+                    cpu_timing = build_info.get("cpu_build_timing", {})
+                    if "build_time_seconds" in cpu_timing:
+                        build_times.append(cpu_timing["build_time_seconds"])
+                elif "build_time_seconds" in build_info:
                     build_times.append(build_info["build_time_seconds"])
             else:  # GPU processing
                 # Priority 1: Use new device_runs format for cleaner data
@@ -321,7 +327,7 @@ class StorageManager:
             if not runs:
                 continue
                 
-            # Extract metrics from schema: metrics.tokens_per_second; sizes at top-level
+            # Extract metrics from schema: for CPU it's in metrics.generation, for GPU it's metrics.tokens_per_second
             tokens_per_second = []
             elapsed_seconds = []
             prompt_sizes = []
@@ -329,15 +335,25 @@ class StorageManager:
             total_tokens = []
             for run in runs:
                 m = run.get("metrics", {})
+                
+                # Try GPU format first, then CPU format
                 tps = m.get("tokens_per_second")
+                if not isinstance(tps, (int, float)) and "generation" in m:
+                    # CPU format: metrics.generation.avg_tokens_per_sec
+                    generation = m.get("generation", {})
+                    tps = generation.get("avg_tokens_per_sec")
+                
                 if isinstance(tps, (int, float)):
                     tokens_per_second.append(tps)
+                    
                 es = run.get("elapsed_seconds")
                 if isinstance(es, (int, float)):
                     elapsed_seconds.append(es)
+                    
                 ps = run.get("prompt_size")
                 if isinstance(ps, (int, float)):
                     prompt_sizes.append(ps)
+                    
                 gs = run.get("generation_size")
                 if isinstance(gs, (int, float)):
                     generation_sizes.append(gs)
