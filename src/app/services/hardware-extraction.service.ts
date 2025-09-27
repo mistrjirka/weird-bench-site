@@ -83,41 +83,71 @@ export class HardwareExtractionService {
   /**
    * Extract hardware information from Llama results
    * Llama provides detailed CPU info and GPU info for GPU runs
+   * Priority: device_runs -> runs_cpu/runs_gpu (for backward compatibility)
    */
   private extractFromLlama(data: LlamaResult): HardwareInfo[] {
     const hardware: HardwareInfo[] = [];
 
-    // Extract CPU info from CPU runs
-    if (data.runs_cpu && data.runs_cpu.length > 0) {
-      const cpuRun = data.runs_cpu[0];
-      const cpuInfo = cpuRun.metrics.system_info.cpu_info;
+    // Priority 1: Extract from new device_runs format for cleaner separation
+    if (data.device_runs && data.device_runs.length > 0) {
+      for (const deviceRun of data.device_runs) {
+        if (deviceRun.device_type === 'cpu' && deviceRun.runs.length > 0) {
+          const run = deviceRun.runs[0];
+          const cpu: CpuInfo = {
+            id: this.generateHardwareId('cpu', deviceRun.device_name),
+            name: deviceRun.device_name,
+            type: 'cpu',
+            cores: 0,
+            threads: run.metrics.system_info.n_threads
+          };
+          hardware.push(cpu);
+        } else if (deviceRun.device_type === 'gpu' && deviceRun.runs.length > 0) {
+          const run = deviceRun.runs[0];
+          const gpu: GpuInfo = {
+            id: this.generateHardwareId('gpu', deviceRun.device_name),
+            name: deviceRun.device_name,
+            type: 'gpu',
+            memory: 0,
+            deviceFramework: this.mapBackendToFramework(run.metrics.system_info.backends)
+          };
+          hardware.push(gpu);
+        }
+      }
+    } else {
+      // Priority 2: Fallback to legacy format for backwards compatibility
       
-      const cpu: CpuInfo = {
-        id: this.generateHardwareId('cpu', cpuInfo),
-        name: cpuInfo,
-        type: 'cpu',
-        cores: 0, // Could be extracted from name parsing
-        threads: cpuRun.metrics.system_info.n_threads
-      };
-      
-      hardware.push(cpu);
-    }
-
-    // Extract GPU info from GPU runs
-    if (data.runs_gpu && data.runs_gpu.length > 0) {
-      const gpuRun = data.runs_gpu[0];
-      const gpuInfo = gpuRun.metrics.system_info.gpu_info;
-      
-      if (gpuInfo && gpuInfo.trim()) {
-        const gpu: GpuInfo = {
-          id: this.generateHardwareId('gpu', gpuInfo),
-          name: gpuInfo,
-          type: 'gpu',
-          memory: 0, // Not directly available
-          deviceFramework: this.mapBackendToFramework(gpuRun.metrics.system_info.backends)
+      // Extract CPU info from CPU runs
+      if (data.runs_cpu && data.runs_cpu.length > 0) {
+        const cpuRun = data.runs_cpu[0];
+        const cpuInfo = cpuRun.metrics.system_info.cpu_info;
+        
+        const cpu: CpuInfo = {
+          id: this.generateHardwareId('cpu', cpuInfo),
+          name: cpuInfo,
+          type: 'cpu',
+          cores: 0, // Could be extracted from name parsing
+          threads: cpuRun.metrics.system_info.n_threads
         };
         
-        hardware.push(gpu);
+        hardware.push(cpu);
+      }
+
+      // Extract GPU info from GPU runs
+      if (data.runs_gpu && data.runs_gpu.length > 0) {
+        const gpuRun = data.runs_gpu[0];
+        const gpuInfo = gpuRun.metrics.system_info.gpu_info;
+        
+        if (gpuInfo && gpuInfo.trim()) {
+          const gpu: GpuInfo = {
+            id: this.generateHardwareId('gpu', gpuInfo),
+            name: gpuInfo,
+            type: 'gpu',
+            memory: 0, // Not directly available
+            deviceFramework: this.mapBackendToFramework(gpuRun.metrics.system_info.backends)
+          };
+          
+          hardware.push(gpu);
+        }
       }
     }
 

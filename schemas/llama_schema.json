@@ -352,6 +352,106 @@
             }
           }
         },
+        "device_runs": {
+          "type": "array",
+          "description": "New format: separate results per device for cleaner GPU separation",
+          "items": {
+            "type": "object",
+            "required": ["device_name", "device_type", "runs", "success"],
+            "properties": {
+              "device_name": {
+                "type": "string"
+              },
+              "device_index": {
+                "type": ["integer", "null"],
+                "minimum": 0
+              },
+              "device_driver": {
+                "type": "string"
+              },
+              "device_type": {
+                "type": "string",
+                "enum": ["cpu", "gpu"]
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "error": {
+                "type": "string"
+              },
+              "runs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["prompt_size", "generation_size", "returncode", "elapsed_seconds", "success"],
+                  "properties": {
+                    "prompt_size": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "generation_size": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "ngl": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "returncode": {
+                      "type": "integer"
+                    },
+                    "elapsed_seconds": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "metrics": {
+                      "type": "object",
+                      "properties": {
+                        "system_info": {
+                          "type": "object"
+                        },
+                        "prompt_processing": {
+                          "type": "object"
+                        },
+                        "generation": {
+                          "type": "object"
+                        },
+                        "tokens_per_second": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "total_time_ms": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      }
+                    },
+                    "essential_info": {
+                      "type": "object",
+                      "properties": {
+                        "build_commit": {
+                          "type": "string"
+                        },
+                        "model_type": {
+                          "type": "string"
+                        },
+                        "backends": {
+                          "type": "string"
+                        },
+                        "test_time": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "gpu_selection": {
           "type": "object",
           "properties": {

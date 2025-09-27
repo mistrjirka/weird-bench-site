@@ -154,10 +154,15 @@ class HardwareExtractor:
             return
             
         for device_run in actual_data['device_runs']:
-            # Extract from device_name (old format)
+            # Extract from device_name (individual device per run)
             if 'device_name' in device_run:
                 device_name = str(device_run['device_name'])
                 framework = device_run.get('device_framework')
+                
+                # Skip combined GPU names (e.g. "GPU1, GPU2") - only process individual GPUs
+                if ',' in device_name and len(device_name.split(',')) > 1:
+                    print(f"Skipping combined GPU name: {device_name}")
+                    continue
                 
                 if self._is_cpu_device(device_name, framework):
                     cpu = {
@@ -176,41 +181,32 @@ class HardwareExtractor:
                     })
                     if not self._hardware_exists(hardware_info['gpus'], gpu):
                         hardware_info['gpus'].append(gpu)
-            
-            # Extract from raw_json system_info (new format)
-            if 'raw_json' in device_run and device_run['raw_json']:
-                for raw_data in device_run['raw_json']:
-                    if 'system_info' in raw_data and 'devices' in raw_data['system_info']:
-                        for device in raw_data['system_info']['devices']:
-                            if 'name' in device and 'type' in device:
-                                device_name = str(device['name'])
-                                device_type = str(device['type'])
-                                
-                                if self._is_cpu_device(device_name, device_type):
-                                    cpu = {
-                                        'name': device_name,
-                                        'type': 'cpu',
-                                        'manufacturer': self._detect_cpu_manufacturer(device_name),
-                                        'cores': raw_data['system_info'].get('num_cpu_cores'),
-                                        'threads': raw_data['system_info'].get('num_cpu_threads')
-                                    }
-                                    if not self._hardware_exists(hardware_info['cpus'], cpu):
-                                        hardware_info['cpus'].append(cpu)
-                                else:
-                                    gpu = self._normalize_gpu_info({
-                                        'name': device_name,
-                                        'framework': self._detect_gpu_framework(device_name, device_type)
-                                    })
-                                    if not self._hardware_exists(hardware_info['gpus'], gpu):
-                                        hardware_info['gpus'].append(gpu)
-                    # Only process first raw_json to avoid duplicates
-                    break
+        
+        # Note: We intentionally skip raw_json system_info processing to avoid
+        # duplicates and mixed hardware entries. Device-specific runs should
+        # already provide the correct individual device names.
 
     def _extract_from_llama(self, data: Dict[str, Any], hardware_info: Dict[str, Any]) -> None:
         """Extract hardware info from Llama benchmark data"""
         # Handle wrapped data structure - extract from 'results' if present
         actual_data = data.get('results', data) if 'results' in data else data
         
+        # Priority 1: Check new device_runs format for cleaner GPU separation
+        if actual_data.get('device_runs'):
+            for device_run in actual_data['device_runs']:
+                if device_run.get('device_type') == 'gpu':
+                    gpu = {
+                        'name': device_run['device_name'],
+                        'type': 'gpu',
+                        'manufacturer': self._detect_gpu_manufacturer(device_run['device_name']),
+                        'framework': 'Vulkan',  # Llama uses Vulkan for GPU benchmarks
+                        'device_index': device_run.get('device_index'),
+                        'driver': device_run.get('device_driver', 'unknown')
+                    }
+                    if not self._hardware_exists(hardware_info['gpus'], gpu):
+                        hardware_info['gpus'].append(gpu)
+        
+        # Priority 2: Check CPU runs for CPU info
         if actual_data.get('runs_cpu'):
             for run in actual_data['runs_cpu']:
                 cpu_info = run.get('metrics', {}).get('system_info', {}).get('cpu_info')
@@ -220,30 +216,31 @@ class HardwareExtractor:
                         hardware_info['cpus'].append(cpu)
                     break
         
-        # Check if GPU selection is specified
-        gpu_selection = actual_data.get('gpu_selection')
-        if gpu_selection and gpu_selection.get('available_gpus'):
-            # Use GPU selection info to create separate entries for each GPU
-            for gpu_device in gpu_selection['available_gpus']:
-                gpu = {
-                    'name': gpu_device['name'],
-                    'type': 'gpu',
-                    'manufacturer': self._detect_gpu_manufacturer(gpu_device['name']),
-                    'framework': 'Vulkan',  # Llama uses Vulkan for GPU benchmarks
-                    'device_index': gpu_device['index'],
-                    'icd_path': gpu_device.get('icd_path')
-                }
-                if not self._hardware_exists(hardware_info['gpus'], gpu):
-                    hardware_info['gpus'].append(gpu)
-        elif actual_data.get('runs_gpu'):
-            # Fallback: extract from GPU runs (legacy behavior)
-            for run in actual_data['runs_gpu']:
-                gpu_info = run.get('metrics', {}).get('system_info', {}).get('gpu_info')
-                if gpu_info:
-                    gpu = self._normalize_gpu_info(gpu_info)
+        # Priority 3: Check if GPU selection is specified (fallback for older format)
+        if not hardware_info['gpus']:  # Only if no GPUs found from device_runs
+            gpu_selection = actual_data.get('gpu_selection')
+            if gpu_selection and gpu_selection.get('available_gpus'):
+                # Use GPU selection info to create separate entries for each GPU
+                for gpu_device in gpu_selection['available_gpus']:
+                    gpu = {
+                        'name': gpu_device['name'],
+                        'type': 'gpu',
+                        'manufacturer': self._detect_gpu_manufacturer(gpu_device['name']),
+                        'framework': 'Vulkan',  # Llama uses Vulkan for GPU benchmarks
+                        'device_index': gpu_device['index'],
+                        'icd_path': gpu_device.get('icd_path')
+                    }
                     if not self._hardware_exists(hardware_info['gpus'], gpu):
                         hardware_info['gpus'].append(gpu)
-                    break
+            elif actual_data.get('runs_gpu'):
+                # Last fallback: extract from GPU runs (legacy behavior)
+                for run in actual_data['runs_gpu']:
+                    gpu_info = run.get('metrics', {}).get('system_info', {}).get('gpu_info')
+                    if gpu_info:
+                        gpu = self._normalize_gpu_info(gpu_info)
+                        if not self._hardware_exists(hardware_info['gpus'], gpu):
+                            hardware_info['gpus'].append(gpu)
+                        break
 
     def _extract_from_7zip(self, data: Dict[str, Any], hardware_info: Dict[str, Any]) -> None:
         """Extract hardware info from 7zip benchmark data"""

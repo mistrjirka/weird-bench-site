@@ -311,10 +311,34 @@ class StorageManager:
                 build_info = actual_data.get("build", {}).get("cpu_build_timing", {})
                 if "build_time_seconds" in build_info:
                     build_times.append(build_info["build_time_seconds"])
-            else:
-                runs = actual_data.get("runs_gpu", [])
-            
-            all_runs.extend(runs)
+            else:  # GPU processing
+                # Priority 1: Use new device_runs format for cleaner data
+                if 'device_runs' in actual_data:
+                    for device_run in actual_data['device_runs']:
+                        if (device_run.get('device_type') == 'gpu' and 
+                            self._gpu_names_match(device_run.get('device_name', ''), hardware_name)):
+                            # Convert device_run format to legacy run format for compatibility
+                            for run in device_run.get('runs', []):
+                                # Reconstruct metrics format expected by processing logic
+                                legacy_run = {
+                                    'type': 'gpu',
+                                    'prompt_size': run.get('prompt_size'),
+                                    'generation_size': run.get('generation_size'),
+                                    'ngl': run.get('ngl', 99),
+                                    'returncode': run.get('returncode', 0),
+                                    'elapsed_seconds': run.get('elapsed_seconds', 0),
+                                    'metrics': run.get('metrics', {}),
+                                    'gpu_device': {
+                                        'name': device_run['device_name'],
+                                        'index': device_run.get('device_index'),
+                                        'driver': device_run.get('device_driver')
+                                    }
+                                }
+                                all_runs.append(legacy_run)
+                else:
+                    # Fallback to legacy runs_gpu format
+                    runs = actual_data.get("runs_gpu", [])
+                    all_runs.extend(runs)
 
         # Group runs by common parameters (like thread count, model size)
         grouped_runs = self._group_llama_runs(all_runs)
@@ -796,19 +820,31 @@ class StorageManager:
                 device_runs = actual_data.get('device_runs') or []
                 gpu_runs = [run for run in device_runs if run.get('device_framework') != 'CPU']
                 return len(gpu_runs) > 0  # Only store if there are actual GPU runs
-            if benchmark_type == 'llama' and actual_data.get('runs_gpu'):
-                # For Llama with GPU selection, check if this specific GPU was used
-                gpu_selection = actual_data.get('gpu_selection')
-                if gpu_selection and gpu_selection.get('available_gpus'):
-                    # Check if any of the available GPUs match this hardware entry
-                    for gpu_device in gpu_selection['available_gpus']:
-                        gpu_name = gpu_device.get('name', '')
-                        if gpu_name and self._gpu_names_match(gpu_name, hardware_name):
+                
+            if benchmark_type == 'llama':
+                # Priority 1: Check new device_runs format for GPU entries
+                if 'device_runs' in actual_data:
+                    for device_run in actual_data['device_runs']:
+                        if (device_run.get('device_type') == 'gpu' and 
+                            self._gpu_names_match(device_run.get('device_name', ''), hardware_name)):
                             return True
-                    return False
-                else:
-                    # Legacy behavior: store if there are GPU runs
-                    return True
+                    # If no matching device_runs found, continue to legacy check
+                
+                # Priority 2: Legacy runs_gpu check  
+                if actual_data.get('runs_gpu'):
+                    # For Llama with GPU selection, check if this specific GPU was used
+                    gpu_selection = actual_data.get('gpu_selection')
+                    if gpu_selection and gpu_selection.get('available_gpus'):
+                        # Check if any of the available GPUs match this hardware entry
+                        for gpu_device in gpu_selection['available_gpus']:
+                            gpu_name = gpu_device.get('name', '')
+                            if gpu_name and self._gpu_names_match(gpu_name, hardware_name):
+                                return True
+                        return False
+                    else:
+                        # Legacy behavior: store if there are GPU runs
+                        return True
+                return False
             return False
         
         return False
@@ -824,7 +860,16 @@ class StorageManager:
             actual_data = filtered_data['results']
         
         if hardware_type == 'gpu' and benchmark_type == 'llama':
-            # For GPU hardware with llama benchmarks, filter runs_gpu to only include runs for this GPU
+            # Priority 1: Filter new device_runs format for cleaner GPU separation
+            if 'device_runs' in actual_data:
+                filtered_device_runs = []
+                for device_run in actual_data['device_runs']:
+                    device_name = device_run.get('device_name', '')
+                    if device_name and self._gpu_names_match(device_name, hardware_name):
+                        filtered_device_runs.append(device_run)
+                actual_data['device_runs'] = filtered_device_runs
+            
+            # Also filter legacy runs_gpu format for backwards compatibility
             if 'runs_gpu' in actual_data:
                 filtered_runs = []
                 for run in actual_data['runs_gpu']:

@@ -97,7 +97,36 @@ export interface LlamaResult {
   };
   runs_cpu?: LlamaCpuRun[];
   runs_gpu?: LlamaGpuRun[];
+  device_runs?: LlamaDeviceRun[]; // NEW: Device-specific results for cleaner GPU separation
   gpu_selection?: LlamaGpuSelection;
+}
+
+export interface LlamaDeviceRun {
+  device_name: string;
+  device_index?: number;
+  device_driver?: string;
+  device_type: 'cpu' | 'gpu';
+  success: boolean;
+  error?: string;
+  runs: LlamaDeviceSpecificRun[];
+}
+
+export interface LlamaDeviceSpecificRun {
+  prompt_size: number;
+  generation_size: number;
+  ngl: number;
+  returncode: number;
+  elapsed_seconds: number;
+  success: boolean;
+  metrics: LlamaMetrics;
+  essential_info?: LlamaEssentialInfo;
+}
+
+export interface LlamaEssentialInfo {
+  build_commit?: string;
+  model_type?: string;
+  backends?: string;
+  test_time?: string;
 }
 
 export interface LlamaCpuRun {
