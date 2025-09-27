@@ -306,14 +306,26 @@ export class HardwareDetail implements OnInit {
         (dp.elapsed_seconds_median < min.elapsed_seconds_median ? dp : min)
       );
 
+      // Create threadData array for charts
+      const threadData = dataPoints
+        .map((dp: any) => ({
+          threads: dp.thread_count,
+          time: dp.elapsed_seconds_median,
+          efficiency: dp.thread_efficiency_percent_median
+        }))
+        .sort((a, b) => a.threads - b.threads);
+
+      const allTimes = dataPoints.map((dp: any) => dp.elapsed_seconds_median);
+
       return {
         testDataSizeMB: 200, // Standard 7zip test size
         bestTime: bestPoint.elapsed_seconds_median,
         bestThreads: bestPoint.thread_count,
         archiveSize: bestPoint.archive_size_bytes_median || 0,
         compressionRatio: null, // Removed from display
-        threadEfficiency: bestPoint.thread_efficiency_percent_median,
-        totalRuns: dataPoints.reduce((sum: number, dp: any) => sum + dp.run_count, 0)
+        totalRuns: dataPoints.reduce((sum: number, dp: any) => sum + dp.run_count, 0),
+        averageTime: this.hardwareService.median(allTimes),
+        threadData: threadData
       };
     }
 
