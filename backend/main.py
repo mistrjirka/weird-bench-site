@@ -257,6 +257,20 @@ async def upload_benchmark(request: Request):
         if not benchmark_results:
             raise HTTPException(status_code=400, detail="No valid benchmark JSON files found")
 
+        # REQUIRE ALL 4 BENCHMARK TYPES
+        required_benchmarks = {'llama', 'blender', '7zip', 'reversan'}
+        uploaded_benchmarks = set(benchmark_results.keys())
+        missing_benchmarks = required_benchmarks - uploaded_benchmarks
+        
+        if missing_benchmarks:
+            missing_list = ', '.join(sorted(missing_benchmarks))
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Upload incomplete: missing required benchmark files: {missing_list}. All 4 benchmark types (llama, blender, 7zip, reversan) must be provided."
+            )
+        
+        logger.info(f"All 4 required benchmark types present: {', '.join(sorted(uploaded_benchmarks))}")
+
         # VALIDATE ALL BENCHMARK DATA BEFORE PROCESSING
         try:
             all_valid, validation_errors = json_validator.are_all_benchmarks_valid(benchmark_results)

@@ -148,6 +148,18 @@ class JsonValidator:
         if not runs_cpu and not runs_gpu:
             return False, "Llama benchmark missing both CPU and GPU runs"
         
+        # Check for required cpu_build_timing data
+        cpu_build_timing = data.get("cpu_build_timing")
+        if not cpu_build_timing:
+            return False, "Llama benchmark missing cpu_build_timing data"
+        
+        # Validate build timing structure
+        required_timing_fields = ["config_time_seconds", "build_time_seconds", "total_time_seconds"]
+        for field in required_timing_fields:
+            value = cpu_build_timing.get(field)
+            if not isinstance(value, (int, float)) or value <= 0:
+                return False, f"Llama benchmark missing valid {field} in cpu_build_timing"
+        
         # Validate run structure - Llama uses returncode (0 = success) instead of success field
         all_runs = runs_cpu + runs_gpu
         for run in all_runs:
