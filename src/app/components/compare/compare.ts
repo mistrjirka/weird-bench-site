@@ -158,6 +158,8 @@ export class CompareComponent implements OnInit {
           const improvement = this.percentImprovement(lc, rc, false);
           result.push({ name: 'llama compile', left: lc, right: rc, unit: 's', improvement, higherIsBetter: false, weight: 1 });
         }
+        // Skip the generic extractMetric for CPU llama to avoid duplication
+        continue;
       }
       const leftVal = this.extractMetric(name, left[name]);
       const rightVal = this.extractMetric(name, right[name]);

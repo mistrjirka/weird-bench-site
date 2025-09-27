@@ -282,13 +282,20 @@ class StorageManager:
                 runs = actual_data.get("runs_cpu", [])
                 all_runs.extend(runs)
                 # Try different build timing structures
-                build_info = actual_data.get("build", {})
-                if "cpu_build_timing" in build_info:
-                    cpu_timing = build_info.get("cpu_build_timing", {})
+                # First check for direct cpu_build_timing (new format)
+                if "cpu_build_timing" in actual_data:
+                    cpu_timing = actual_data.get("cpu_build_timing", {})
                     if "build_time_seconds" in cpu_timing:
                         build_times.append(cpu_timing["build_time_seconds"])
-                elif "build_time_seconds" in build_info:
-                    build_times.append(build_info["build_time_seconds"])
+                # Fallback to old build structure
+                else:
+                    build_info = actual_data.get("build", {})
+                    if "cpu_build_timing" in build_info:
+                        cpu_timing = build_info.get("cpu_build_timing", {})
+                        if "build_time_seconds" in cpu_timing:
+                            build_times.append(cpu_timing["build_time_seconds"])
+                    elif "build_time_seconds" in build_info:
+                        build_times.append(build_info["build_time_seconds"])
             else:  # GPU processing
                 # Priority 1: Use new device_runs format for cleaner data
                 if 'device_runs' in actual_data:
