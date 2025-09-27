@@ -313,7 +313,7 @@ export class HardwareDetail implements OnInit {
           time: dp.elapsed_seconds_median,
           efficiency: dp.thread_efficiency_percent_median
         }))
-        .sort((a, b) => a.threads - b.threads);
+        .sort((a: any, b: any) => a.threads - b.threads);
 
       const allTimes = dataPoints.map((dp: any) => dp.elapsed_seconds_median);
 
