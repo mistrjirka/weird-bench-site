@@ -149,11 +149,22 @@ export class HardwareDataService {
           
           // Add benchmark data if present
           if (response.llama) {
+            const mv = response.llama;
+            // Create a synthetic data point so compare views have a concrete value
+            const dp: any = { group: 'median' };
+            if (typeof mv['generation_token_speed'] === 'number') {
+              dp.tokens_per_second_median = mv['generation_token_speed'];
+            }
+            if (typeof mv['prompt_token_speed'] === 'number') {
+              dp.prompt_tokens_per_second_median = mv['prompt_token_speed'];
+            }
+            const data_points = (dp.tokens_per_second_median || dp.prompt_tokens_per_second_median) ? [dp] : [];
+
             convertedResponse.processed_benchmarks.push({
               benchmark_type: 'llama',
               hardware_type: type,
-              data_points: [],
-              median_values: response.llama,
+              data_points,
+              median_values: mv,
               stats: {},
               file_count: 1,
               valid_file_count: 1
@@ -188,23 +199,25 @@ export class HardwareDataService {
           }
           
           if (response.blender) {
-            // If server provides scene_scores, map them to data_points for UI
-            const sceneScores = Array.isArray(response.blender.scene_scores) ? response.blender.scene_scores : [];
-            const data_points = sceneScores.map((s: any) => ({
-              scene: s.scene,
-              samples_per_minute_median: (typeof s.samples_per_minute === 'number') ? s.samples_per_minute : s.samples_per_minute_median,
-              elapsed_seconds_median: (typeof s.elapsed_seconds === 'number') ? s.elapsed_seconds : s.elapsed_seconds_median,
-              run_count: s.run_count ?? 1
-            }));
-            const stats = {
-              scenes: response.blender.scenesCount ?? data_points.length
-            } as any;
+            // Map simplified per-scene medians into data_points for compare view
+            const mv = response.blender;
+            const scenes = ['classroom', 'junkshop', 'monster'];
+            const data_points = scenes
+              .filter((key: string) => typeof mv[key] === 'number')
+              .map((key: string) => ({
+                scene: key,
+                samples_per_minute_median: mv[key],
+                elapsed_seconds_median: null,
+                run_count: 1
+              }));
+
+            const stats = { scenes: data_points.length } as any;
 
             convertedResponse.processed_benchmarks.push({
               benchmark_type: 'blender',
               hardware_type: type,
               data_points,
-              median_values: response.blender,
+              median_values: mv,
               stats,
               file_count: 1,
               valid_file_count: 1
