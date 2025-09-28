@@ -171,7 +171,7 @@ export class HardwareDataService {
             });
           }
           
-          if (response.reversan) {
+          if (type === 'cpu' && response.reversan) {
             // Map depth/thread arrays into typed data_points for UI/compare
             const depth = (response.reversan.depth_times || []).map((d: any) => ({
               group: `depth_${d.depth}`,
@@ -224,7 +224,7 @@ export class HardwareDataService {
             });
           }
           
-          if (response['7zip']) {
+          if (type === 'cpu' && response['7zip']) {
             convertedResponse.processed_benchmarks.push({
               benchmark_type: '7zip',
               hardware_type: type,

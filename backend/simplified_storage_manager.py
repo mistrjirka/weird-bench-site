@@ -210,39 +210,40 @@ class SimplifiedStorageManager:
                 }
 
             # --- REVERSAN ---
-            reversan_depth_times = []
-            reversan_thread_times = []
-            for bf in grouped.get("reversan", []):
-                d = bf.data if hasattr(bf, 'data') and bf.data else {}
-                
-                # Process unified format directly
-                if 'depth_benchmarks' in d:
-                    for run in d['depth_benchmarks']:
-                        reversan_depth_times.append({
-                            "depth": run.get("depth"),
-                            "time": run.get("time_seconds")
-                        })
-                if 'thread_benchmarks' in d:
-                    for run in d['thread_benchmarks']:
-                        reversan_thread_times.append({
-                            "threads": run.get("threads"),
-                            "time": run.get("time_seconds")
-                        })
-            # Median by depth and threads
-            def median_by_key(arr, key):
-                from collections import defaultdict
-                groups = defaultdict(list)
-                for item in arr:
-                    groups[item[key]].append(item["time"])
-                return [
-                    {key: k, "time": median(v)} for k, v in sorted(groups.items())
-                ]
             reversan = None
-            if reversan_depth_times or reversan_thread_times:
-                reversan = {
-                    "depth_times": median_by_key(reversan_depth_times, "depth"),
-                    "thread_times": median_by_key(reversan_thread_times, "threads")
-                }
+            if hardware_type == "cpu":
+                reversan_depth_times = []
+                reversan_thread_times = []
+                for bf in grouped.get("reversan", []):
+                    d = bf.data if hasattr(bf, 'data') and bf.data else {}
+                    
+                    # Process unified format directly
+                    if 'depth_benchmarks' in d:
+                        for run in d['depth_benchmarks']:
+                            reversan_depth_times.append({
+                                "depth": run.get("depth"),
+                                "time": run.get("time_seconds")
+                            })
+                    if 'thread_benchmarks' in d:
+                        for run in d['thread_benchmarks']:
+                            reversan_thread_times.append({
+                                "threads": run.get("threads"),
+                                "time": run.get("time_seconds")
+                            })
+                # Median by depth and threads
+                def median_by_key(arr, key):
+                    from collections import defaultdict
+                    groups = defaultdict(list)
+                    for item in arr:
+                        groups[item[key]].append(item["time"])
+                    return [
+                        {key: k, "time": median(v)} for k, v in sorted(groups.items())
+                    ]
+                if reversan_depth_times or reversan_thread_times:
+                    reversan = {
+                        "depth_times": median_by_key(reversan_depth_times, "depth"),
+                        "thread_times": median_by_key(reversan_thread_times, "threads")
+                    }
 
             # --- BLENDER ---
             blender_classroom = []
@@ -252,17 +253,17 @@ class SimplifiedStorageManager:
                 d = bf.data if hasattr(bf, 'data') and bf.data else {}
                 
                 # Process unified format directly
-                cpu = d.get("cpu", {})
-                if cpu:
-                    if "classroom" in cpu:
-                        blender_classroom.append(cpu["classroom"])
-                    if "junkshop" in cpu:
-                        blender_junkshop.append(cpu["junkshop"])
-                    if "monster" in cpu:
-                        blender_monster.append(cpu["monster"])
-                        
-                # For GPU hardware, check GPU results
-                if hardware_type == "gpu":
+                if hardware_type == "cpu":
+                    cpu = d.get("cpu", {})
+                    if cpu:
+                        if "classroom" in cpu:
+                            blender_classroom.append(cpu["classroom"])
+                        if "junkshop" in cpu:
+                            blender_junkshop.append(cpu["junkshop"])
+                        if "monster" in cpu:
+                            blender_monster.append(cpu["monster"])
+                else:
+                    # For GPU hardware, check GPU results
                     for gpu in d.get("gpus", []):
                         dev_slug = gpu.get('device_slug')
                         dev_name = gpu.get('device_name')
@@ -291,27 +292,28 @@ class SimplifiedStorageManager:
                 }
 
             # --- 7ZIP ---
-            zip_usage = []
-            zip_ru_mips = []
-            zip_total_mips = []
-            # Check both possible key names: "7zip" and "sevenzip" 
-            for bf in grouped.get("7zip", []) + grouped.get("sevenzip", []):
-                d = bf.data if hasattr(bf, 'data') and bf.data else {}
-                
-                # Process unified format directly
-                if "usage_percent" in d:
-                    zip_usage.append(d["usage_percent"])
-                if "ru_mips" in d:
-                    zip_ru_mips.append(d["ru_mips"])
-                if "total_mips" in d:
-                    zip_total_mips.append(d["total_mips"])
             sevenzip = None
-            if zip_usage or zip_ru_mips or zip_total_mips:
-                sevenzip = {
-                    "usage_percent": median(zip_usage),
-                    "ru_mips": median(zip_ru_mips),
-                    "total_mips": median(zip_total_mips)
-                }
+            if hardware_type == "cpu":
+                zip_usage = []
+                zip_ru_mips = []
+                zip_total_mips = []
+                # Check both possible key names: "7zip" and "sevenzip" 
+                for bf in grouped.get("7zip", []) + grouped.get("sevenzip", []):
+                    d = bf.data if hasattr(bf, 'data') and bf.data else {}
+                    
+                    # Process unified format directly
+                    if "usage_percent" in d:
+                        zip_usage.append(d["usage_percent"])
+                    if "ru_mips" in d:
+                        zip_ru_mips.append(d["ru_mips"])
+                    if "total_mips" in d:
+                        zip_total_mips.append(d["total_mips"])
+                if zip_usage or zip_ru_mips or zip_total_mips:
+                    sevenzip = {
+                        "usage_percent": median(zip_usage),
+                        "ru_mips": median(zip_ru_mips),
+                        "total_mips": median(zip_total_mips)
+                    }
 
             # Compose response
             clean_hw = CleanHardwareInfo(
