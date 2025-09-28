@@ -362,7 +362,7 @@ class SimplifiedStorageManager:
         
         # Simplified processing based on benchmark type
         if benchmark_type == "llama":
-            return self._process_llama_data_simplified(valid_data, hardware_type)
+            return self._process_llama_data_simplified(valid_data, hardware_type, hardware_id)
         elif benchmark_type == "blender":
             return self._process_blender_data_simplified(valid_data, hardware_type)
         elif benchmark_type == "7zip":
@@ -392,50 +392,108 @@ class SimplifiedStorageManager:
             # Odd number of values - middle value
             return float(sorted_values[n//2])
 
-    def _process_llama_data_simplified(self, data_list: List[Dict], hardware_type: str) -> ProcessedBenchmarkData:
-        """Simplified llama data processing."""
-        data_points = []
-        speeds = []
-        
+    def _process_llama_data_simplified(self, data_list: List[Dict], hardware_type: str, hardware_id: str) -> ProcessedBenchmarkData:
+        """Simplified llama data processing.
+        Supports unified schema (cpu_benchmark/gpu_benchmarks) and legacy results.runs_*.
+        For GPU hardware, filters gpu_benchmarks by matching hw_id when available.
+        """
+        data_points: List[Dict[str, Any]] = []
+        gen_speeds: List[float] = []
+        prompt_speeds: List[float] = []
+
         for data in data_list:
-            # Access results nested structure
-            results = data.get('results', {})
-            
-            if hardware_type == "cpu" and "runs_cpu" in results:
-                for run in results["runs_cpu"]:
-                    # Look for metrics in the actual structure
-                    metrics = run.get('metrics', {})
-                    generation = metrics.get('generation', {})
-                    if 'avg_tokens_per_sec' in generation:
-                        speed = generation['avg_tokens_per_sec']
-                        speeds.append(speed)
+            # Prefer unified schema if present
+            cpu_bench = data.get("cpu_benchmark")
+            gpu_benches = data.get("gpu_benchmarks")
+
+            if hardware_type == "cpu":
+                if isinstance(cpu_bench, dict):
+                    gs = cpu_bench.get("generation_speed")
+                    ps = cpu_bench.get("prompt_speed")
+                    if isinstance(gs, (int, float)):
+                        gen_speeds.append(float(gs))
+                    if isinstance(ps, (int, float)):
+                        prompt_speeds.append(float(ps))
+                    data_points.append({
+                        "type": "cpu",
+                        "generation_tokens_per_second": gs,
+                        "prompt_tokens_per_second": ps,
+                        "run_data": cpu_bench
+                    })
+                else:
+                    # Fallback to legacy schema under results.runs_cpu
+                    results = data.get('results', {})
+                    for run in results.get("runs_cpu", []):
+                        metrics = run.get('metrics', {})
+                        gen = metrics.get('generation', {})
+                        gs = gen.get('avg_tokens_per_sec')
+                        if isinstance(gs, (int, float)):
+                            gen_speeds.append(float(gs))
+                        # Prompt speed sometimes available
+                        pp = metrics.get('prompt_processing', {})
+                        ps = pp.get('avg_tokens_per_sec')
+                        if isinstance(ps, (int, float)):
+                            prompt_speeds.append(float(ps))
                         data_points.append({
                             "type": "cpu",
-                            "tokens_per_second": speed,
-                            "tokens_per_second_median": speed,
+                            "generation_tokens_per_second": gs,
+                            "prompt_tokens_per_second": ps,
                             "run_data": run
                         })
-            elif hardware_type == "gpu" and "runs_gpu" in results:
-                for run in results["runs_gpu"]:
-                    metrics = run.get('metrics', {})
-                    if 'tokens_per_second' in metrics:
-                        speed = metrics['tokens_per_second']
-                        speeds.append(speed)
+            else:  # GPU hardware
+                if isinstance(gpu_benches, list) and gpu_benches:
+                    for run in gpu_benches:
+                        # Filter by matching hw_id when provided
+                        hw = run.get("hw_id") or run.get("device") or run.get("id")
+                        if hw and hardware_id and hw != hardware_id:
+                            continue
+                        gs = run.get("generation_speed")
+                        ps = run.get("prompt_speed")
+                        if isinstance(gs, (int, float)):
+                            gen_speeds.append(float(gs))
+                        if isinstance(ps, (int, float)):
+                            prompt_speeds.append(float(ps))
                         data_points.append({
-                            "type": "gpu", 
-                            "tokens_per_second": speed,
-                            "tokens_per_second_median": speed,
+                            "type": "gpu",
+                            "generation_tokens_per_second": gs,
+                            "prompt_tokens_per_second": ps,
                             "run_data": run
                         })
-        
-        median_speed = self._calculate_median(speeds) if speeds else 0
-        
+                else:
+                    # Fallback to legacy runs_gpu
+                    results = data.get('results', {})
+                    for run in results.get("runs_gpu", []):
+                        metrics = run.get('metrics', {})
+                        # Legacy GPU often reports combined tokens_per_second
+                        tps = metrics.get('tokens_per_second')
+                        if isinstance(tps, (int, float)):
+                            gen_speeds.append(float(tps))
+                        data_points.append({
+                            "type": "gpu",
+                            "generation_tokens_per_second": tps,
+                            "run_data": run
+                        })
+
+        median_gen = self._calculate_median(gen_speeds) if gen_speeds else 0.0
+        median_prompt = self._calculate_median(prompt_speeds) if prompt_speeds else 0.0
+
+        median_values = {
+            "generation_tokens_per_second_median": median_gen,
+            "prompt_tokens_per_second_median": median_prompt
+        }
+
+        stats = {
+            "count": len(data_points),
+            "max_generation_speed": max(gen_speeds) if gen_speeds else 0.0,
+            "max_prompt_speed": max(prompt_speeds) if prompt_speeds else 0.0
+        }
+
         return ProcessedBenchmarkData(
             benchmark_type="llama",
             hardware_type=hardware_type,
             data_points=data_points,
-            median_values={"tokens_per_second_median": median_speed},
-            stats={"count": len(data_points), "max_speed": max(speeds) if speeds else 0},
+            median_values=median_values,
+            stats=stats,
             file_count=len(data_list),
             valid_file_count=len([d for d in data_list if d])
         )
