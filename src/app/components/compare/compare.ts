@@ -145,23 +145,38 @@ export class CompareComponent implements OnInit {
         }
         continue;
       }
-      if (name === 'llama' && type === 'cpu') {
-        // Add token speed comparison for CPU
-        const leftTps = this.llamaTokenSpeed(left[name]);
-        const rightTps = this.llamaTokenSpeed(right[name]);
-        if (leftTps !== null && rightTps !== null) {
-          const improvement = this.percentImprovement(leftTps, rightTps, true);
-          result.push({ name: 'llama token speed', left: leftTps, right: rightTps, unit: 'tok/s', improvement, higherIsBetter: true, weight: 1 });
+      if (name === 'llama') {
+        if (type === 'cpu') {
+          // CPU: token speed and compile time
+          const leftTps = this.llamaTokenSpeed(left[name]);
+          const rightTps = this.llamaTokenSpeed(right[name]);
+          if (leftTps !== null && rightTps !== null) {
+            const improvement = this.percentImprovement(leftTps, rightTps, true);
+            result.push({ name: 'llama token speed', left: leftTps, right: rightTps, unit: 'tok/s', improvement, higherIsBetter: true, weight: 1 });
+          }
+          
+          const lc = this.llamaCompile(left[name]);
+          const rc = this.llamaCompile(right[name]);
+          if (lc !== null && rc !== null) {
+            const improvement = this.percentImprovement(lc, rc, false);
+            result.push({ name: 'llama compile', left: lc, right: rc, unit: 's', improvement, higherIsBetter: false, weight: 1 });
+          }
+        } else {
+          // GPU: prompt speed and generation speed
+          const leftPrompt = this.llamaPromptSpeed(left[name]);
+          const rightPrompt = this.llamaPromptSpeed(right[name]);
+          if (leftPrompt !== null && rightPrompt !== null) {
+            const improvement = this.percentImprovement(leftPrompt, rightPrompt, true);
+            result.push({ name: 'llama prompt speed', left: leftPrompt, right: rightPrompt, unit: 'tok/s', improvement, higherIsBetter: true, weight: 1 });
+          }
+          
+          const leftGen = this.llamaGenerationSpeed(left[name]);
+          const rightGen = this.llamaGenerationSpeed(right[name]);
+          if (leftGen !== null && rightGen !== null) {
+            const improvement = this.percentImprovement(leftGen, rightGen, true);
+            result.push({ name: 'llama generation speed', left: leftGen, right: rightGen, unit: 'tok/s', improvement, higherIsBetter: true, weight: 1 });
+          }
         }
-        
-        // Add compile time comparison if available
-        const lc = this.llamaCompile(left[name]);
-        const rc = this.llamaCompile(right[name]);
-        if (lc !== null && rc !== null) {
-          const improvement = this.percentImprovement(lc, rc, false);
-          result.push({ name: 'llama compile', left: lc, right: rc, unit: 's', improvement, higherIsBetter: false, weight: 1 });
-        }
-        // Skip the generic extractMetric for CPU llama to avoid duplication
         continue;
       }
       const leftVal = this.extractMetric(name, left[name]);
@@ -200,12 +215,6 @@ export class CompareComponent implements OnInit {
   private extractMetric(name: BenchName, data: ProcessedBenchmarkData)
     : { value: number; unit: string; higherIsBetter: boolean } | null {
     switch (name) {
-      case 'llama': {
-        const vals = (data.data_points || []).map(dp => dp.tokens_per_second_median).filter((v: any) => typeof v === 'number');
-        const v = this.data.median(vals);
-        if (typeof v !== 'number') return null;
-        return { value: v, unit: 'tok/s', higherIsBetter: true };
-      }
       case 'blender': {
         // Compare each scene individually with weight 1/number_of_scenes
         const rightData = this.rightBench()[name];
@@ -282,7 +291,7 @@ export class CompareComponent implements OnInit {
   }
 
   private llamaCompile(data: ProcessedBenchmarkData): number | null {
-    const t = data.median_values?.['build_time_seconds'];
+    const t = data.median_values?.['compilation_time'];
     return typeof t === 'number' ? t : null;
   }
 
@@ -290,6 +299,16 @@ export class CompareComponent implements OnInit {
     const vals = (data.data_points || []).map(dp => dp.tokens_per_second_median).filter((v: any) => typeof v === 'number');
     const v = this.data.median(vals);
     return typeof v === 'number' ? v : null;
+  }
+
+  private llamaPromptSpeed(data: ProcessedBenchmarkData): number | null {
+    const t = data.median_values?.['prompt_token_speed'];
+    return typeof t === 'number' ? t : null;
+  }
+
+  private llamaGenerationSpeed(data: ProcessedBenchmarkData): number | null {
+    const t = data.median_values?.['generation_token_speed'];
+    return typeof t === 'number' ? t : null;
   }
 
   private blenderSceneMap(data: ProcessedBenchmarkData): Map<string, number> {

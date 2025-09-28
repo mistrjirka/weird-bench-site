@@ -39,16 +39,20 @@
           <thead>
             <tr>
               <th>Benchmark</th>
-              <th class="text-end">Left</th>
-              <th class="text-end">Right</th>
+              <th class="text-end">{{ leftName() }}</th>
+              <th class="text-end">{{ rightName() }}</th>
               <th class="text-end">Delta</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let row of details()">
               <td>{{ row.name }}</td>
-              <td class="text-end">{{ row.left | number:'1.2-2' }} {{ row.unit }}</td>
-              <td class="text-end">{{ row.right | number:'1.2-2' }} {{ row.unit }}</td>
+              <td class="text-end" [class.text-success]="row.improvement < 0" [class.text-danger]="row.improvement > 0">
+                {{ row.left | number:'1.2-2' }} {{ row.unit }}
+              </td>
+              <td class="text-end" [class.text-success]="row.improvement > 0" [class.text-danger]="row.improvement < 0">
+                {{ row.right | number:'1.2-2' }} {{ row.unit }}
+              </td>
               <td class="text-end" [class.text-success]="row.improvement > 0" [class.text-danger]="row.improvement < 0">
                 {{ row.improvement | number:'1.1-1' }}%
               </td>
