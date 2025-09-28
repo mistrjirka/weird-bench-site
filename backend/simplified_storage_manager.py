@@ -10,6 +10,7 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from pathlib import Path
+import re
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 from sqlalchemy.orm import selectinload
@@ -63,7 +64,8 @@ class SimplifiedStorageManager:
                         if run_timestamp > latest_timestamp:
                             latest_timestamp = run_timestamp
                 
-                total_benchmarks += len(all_benchmark_files)                # Create clean hardware info
+                total_benchmarks += len(all_benchmark_files)
+                # Create clean hardware info
                 clean_hw = CleanHardwareInfo(
                     id=hw.id,
                     name=hw.name,
@@ -106,6 +108,14 @@ class SimplifiedStorageManager:
     async def get_hardware_detail(self, hardware_type: str, hardware_id: str) -> Optional[dict]:
         """Get detailed hardware information with flat, medianed benchmark data."""
         import time
+        
+        def slugify(name: str) -> str:
+            if not name:
+                return "unknown"
+            s = name.strip().lower()
+            s = re.sub(r"[^a-z0-9]+", "-", s)
+            s = re.sub(r"-+", "-", s).strip("-")
+            return s or "unknown"
         async with database.get_session() as session:
             result = await session.execute(
                 select(Hardware).where(
@@ -167,9 +177,17 @@ class SimplifiedStorageManager:
                 # Only include GPU metrics for the matching GPU (by hw_id) when querying a GPU
                 if hardware_type == "gpu" and isinstance(d.get('gpu_benchmarks'), list):
                     for gpu in d['gpu_benchmarks']:
-                        # Match by hardware_id when available; otherwise include all GPU results (best-effort)
-                        hw_id = gpu.get('hw_id') or gpu.get('device') or gpu.get('id')
-                        if hardware_id and hw_id and hw_id != hardware_id:
+                        # Prefer matching by device_slug (augmented at upload time), then by device_name slug
+                        dev_slug = gpu.get('device_slug')
+                        dev_name = gpu.get('device_name')
+                        if dev_slug:
+                            if dev_slug != hardware_id:
+                                continue
+                        elif dev_name:
+                            if slugify(dev_name) != hardware_id:
+                                continue
+                        else:
+                            # No augmentation present; skip to avoid cross-mixing different GPUs
                             continue
                         ps = gpu.get('prompt_speed')
                         gs = gpu.get('generation_speed')
@@ -246,6 +264,17 @@ class SimplifiedStorageManager:
                 # For GPU hardware, check GPU results
                 if hardware_type == "gpu":
                     for gpu in d.get("gpus", []):
+                        dev_slug = gpu.get('device_slug')
+                        dev_name = gpu.get('device_name')
+                        if dev_slug:
+                            if dev_slug != hardware_id:
+                                continue
+                        elif dev_name:
+                            if slugify(dev_name) != hardware_id:
+                                continue
+                        else:
+                            # No augmentation present; skip to avoid cross-mixing different GPUs
+                            continue
                         scenes = gpu.get("scenes", {})
                         if "classroom" in scenes:
                             blender_classroom.append(scenes["classroom"])
@@ -443,9 +472,24 @@ class SimplifiedStorageManager:
             else:  # GPU hardware
                 if isinstance(gpu_benches, list) and gpu_benches:
                     for run in gpu_benches:
-                        # Filter by matching hw_id when provided
-                        hw = run.get("hw_id") or run.get("device") or run.get("id")
-                        if hw and hardware_id and hw != hardware_id:
+                        # Filter by device_slug (augmented) or name slug as fallback
+                        dev_slug = run.get('device_slug')
+                        dev_name = run.get('device_name')
+                        if dev_slug:
+                            if dev_slug != hardware_id:
+                                continue
+                        elif dev_name:
+                            # Local slugify to avoid cross-import
+                            import re as _re
+                            def _slugify(n: str) -> str:
+                                s = (n or '').strip().lower()
+                                s = _re.sub(r"[^a-z0-9]+", "-", s)
+                                s = _re.sub(r"-+", "-", s).strip("-")
+                                return s or 'unknown'
+                            if _slugify(dev_name) != hardware_id:
+                                continue
+                        else:
+                            # No augmentation; skip to prevent mixing GPUs
                             continue
                         gs = run.get("generation_speed")
                         ps = run.get("prompt_speed")

@@ -17,6 +17,7 @@ import traceback
 import os
 from pathlib import Path
 from typing import Dict, Any
+import re
 
 # Import simplified models and services
 from simplified_models import (
@@ -29,7 +30,6 @@ from simplified_models import (
 from simplified_storage_manager import SimplifiedStorageManager
 # Simple direct upload processing - no legacy conversion
 from database import database, Hardware, BenchmarkRun, BenchmarkFile
-from database import database
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -68,66 +68,160 @@ async def process_unified_upload_direct(unified_data: Dict[str, Any], run_id: st
     if not hardware_info:
         raise HTTPException(status_code=400, detail="No hardware information found in upload")
     
+    # Helper: slugify hardware name to produce a stable, cross-system id
+    def slugify(name: str) -> str:
+        if not name:
+            return "unknown"
+        s = name.strip().lower()
+        # Replace non-alphanum with hyphens
+        s = re.sub(r"[^a-z0-9]+", "-", s)
+        # Collapse multiple hyphens
+        s = re.sub(r"-+", "-", s).strip("-")
+        return s or "unknown"
+
+    # Helper: create per-benchmark data copies augmented with device names for easier filtering later
+    def build_augmented_benchmark_payloads(meta: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+        # Build a quick lookup from hw_id -> device name and slug
+        hw_lookup = {}
+        for k, v in (meta.get("hardware") or {}).items():
+            if isinstance(v, dict):
+                nm = v.get("name") or "Unknown"
+                hw_lookup[k] = {
+                    "name": nm,
+                    "slug": slugify(nm),
+                    "type": v.get("type"),
+                    "manufacturer": v.get("manufacturer")
+                }
+
+        out: Dict[str, Any] = {}
+        # Llama
+        llama = data.get("llama")
+        if llama is not None:
+            llama_copy = json.loads(json.dumps(llama))  # deep copy via JSON
+            # CPU name
+            cpu_dev = None
+            for k, v in (meta.get("hardware") or {}).items():
+                if isinstance(v, dict) and v.get("type") == "cpu":
+                    cpu_dev = hw_lookup.get(k)
+                    break
+            if isinstance(llama_copy.get("cpu_benchmark"), dict) and cpu_dev:
+                llama_copy["cpu_benchmark"]["device_name"] = cpu_dev["name"]
+                llama_copy["cpu_benchmark"]["device_slug"] = cpu_dev["slug"]
+
+            # GPU runs
+            if isinstance(llama_copy.get("gpu_benchmarks"), list):
+                for run in llama_copy["gpu_benchmarks"]:
+                    hwid = run.get("hw_id") or run.get("device") or run.get("id")
+                    if hwid and hwid in hw_lookup:
+                        run["device_name"] = hw_lookup[hwid]["name"]
+                        run["device_slug"] = hw_lookup[hwid]["slug"]
+            out["llama"] = llama_copy
+
+        # Blender
+        blender = data.get("blender")
+        if blender is not None:
+            blender_copy = json.loads(json.dumps(blender))
+            # CPU device name
+            cpu_dev = None
+            for k, v in (meta.get("hardware") or {}).items():
+                if isinstance(v, dict) and v.get("type") == "cpu":
+                    cpu_dev = hw_lookup.get(k)
+                    break
+            if isinstance(blender_copy.get("cpu"), dict) and cpu_dev:
+                blender_copy.setdefault("cpu", {})["device_name"] = cpu_dev["name"]
+                blender_copy.setdefault("cpu", {})["device_slug"] = cpu_dev["slug"]
+            # GPU devices
+            if isinstance(blender_copy.get("gpus"), list):
+                for gd in blender_copy["gpus"]:
+                    hwid = gd.get("hw_id") or gd.get("device") or gd.get("id")
+                    if hwid and hwid in hw_lookup:
+                        gd["device_name"] = hw_lookup[hwid]["name"]
+                        gd["device_slug"] = hw_lookup[hwid]["slug"]
+            out["blender"] = blender_copy
+
+        # 7zip and reversan are device-agnostic in our simplified views
+        if data.get("sevenzip") is not None:
+            out["sevenzip"] = json.loads(json.dumps(data["sevenzip"]))
+        if data.get("reversan") is not None:
+            out["reversan"] = json.loads(json.dumps(data["reversan"]))
+
+        return out
+
     async with database.get_session() as session:
         stored_benchmarks = []
         hardware_ids = []
         
         # Process each hardware device
-        for hw_id, hw_data in hardware_info.items():
-            # Create or get hardware entry
-            result = await session.execute(
-                select(Hardware).where(Hardware.id == hw_id)
-            )
+        # Augment the payload once per upload for all devices
+        augmented_payloads = build_augmented_benchmark_payloads(meta, unified_data)
+
+        for src_hw_id, hw_data in hardware_info.items():
+            # Resolve persistent hardware id from the device name
+            name = hw_data.get('name', 'Unknown')
+            hw_type = hw_data.get('type', 'unknown')
+            manufacturer = hw_data.get('manufacturer', 'Unknown')
+            pers_id = slugify(name)
+
+            # Try to find by persistent id (slug of name)
+            result = await session.execute(select(Hardware).where(Hardware.id == pers_id))
             hardware = result.scalar_one_or_none()
-            
+
+            # Fallback: look for exact name+type match (in case of pre-existing db with non-slug ids)
             if not hardware:
-                # Create new hardware entry
+                result = await session.execute(
+                    select(Hardware).where(Hardware.name == name, Hardware.type == hw_type)
+                )
+                hardware = result.scalar_one_or_none()
+
+            if not hardware:
+                # Create new hardware entry using name-based id
                 hardware = Hardware(
-                    id=hw_id,
-                    name=hw_data.get('name', 'Unknown'),
-                    type=hw_data.get('type', 'unknown'),
-                    manufacturer=hw_data.get('manufacturer', 'Unknown'),
+                    id=pers_id,
+                    name=name,
+                    type=hw_type,
+                    manufacturer=manufacturer,
                     cores=hw_data.get('cores'),
                     framework=hw_data.get('framework')
                 )
                 session.add(hardware)
-                await session.flush()  # Get the ID
-            
-            hardware_ids.append(hw_id)
-            
+                await session.flush()
+            else:
+                # No legacy migration: existing records are used as-is; IDs are expected to be name slugs
+                pass
+
+            hardware_ids.append(hardware.id)
+
             # Get next run number for this hardware
             result = await session.execute(
-                select(func.max(BenchmarkRun.run_number)).where(BenchmarkRun.hardware_id == hw_id)
+                select(func.max(BenchmarkRun.run_number)).where(BenchmarkRun.hardware_id == hardware.id)
             )
             max_run_number = result.scalar() or 0
             next_run_number = max_run_number + 1
-            
+
             # Create benchmark run
             run_timestamp = datetime.fromtimestamp(float(timestamp))
             benchmark_run = BenchmarkRun(
                 run_id=run_id,
-                hardware_id=hw_id,
+                hardware_id=hardware.id,
                 timestamp=run_timestamp,
                 run_number=next_run_number
             )
             session.add(benchmark_run)
-            await session.flush()  # Get the ID
-            
-            # Store each benchmark type directly (no legacy conversion)
-            benchmark_types = ['llama', 'reversan', 'sevenzip', 'blender']
-            for bench_type in benchmark_types:
-                if bench_type in unified_data and unified_data[bench_type] is not None:
-                    # Store the benchmark data directly from unified format
-                    benchmark_file = BenchmarkFile(
-                        benchmark_run_id=benchmark_run.id,
-                        benchmark_type=bench_type if bench_type != 'sevenzip' else '7zip',  # Normalize name
-                        filename=f"{run_id}_{bench_type}.json",  # Generate filename
-                        file_path=f"unified/{run_id}_{bench_type}.json",  # Generate path
-                        file_size=len(str(unified_data[bench_type])),
-                        data=unified_data[bench_type]  # Store unified format directly
-                    )
-                    session.add(benchmark_file)
-                    stored_benchmarks.append(bench_type)
+            await session.flush()
+
+            # Store each benchmark type directly (now with augmentation for device names)
+            for bench_type_key, bench_payload in augmented_payloads.items():
+                normalized_type = bench_type_key if bench_type_key != 'sevenzip' else '7zip'
+                benchmark_file = BenchmarkFile(
+                    benchmark_run_id=benchmark_run.id,
+                    benchmark_type=normalized_type,
+                    filename=f"{run_id}_{bench_type_key}.json",
+                    file_path=f"unified/{run_id}_{bench_type_key}.json",
+                    file_size=len(str(bench_payload)),
+                    data=bench_payload
+                )
+                session.add(benchmark_file)
+                stored_benchmarks.append(bench_type_key)
         
         await session.commit()
         
@@ -221,44 +315,66 @@ async def debug_database():
     """DEBUG: Dump all database contents to logs."""
     try:
         async with database.get_session() as session:
-            # Get all hardware
+            # Get all hardware, runs, and files
             hardware_result = await session.execute(select(Hardware))
             hardware_list = hardware_result.scalars().all()
-            
-            logger.info("=== DATABASE DEBUG DUMP ===")
-            logger.info(f"🖥️  HARDWARE ENTRIES: {len(hardware_list)}")
-            
-            for hw in hardware_list:
-                logger.info(f"  • {hw.id}: {hw.name} ({hw.type}) - {hw.manufacturer}")
-            
-            # Get all benchmark runs
             runs_result = await session.execute(select(BenchmarkRun))
             runs_list = runs_result.scalars().all()
-            
-            logger.info(f"🏃 BENCHMARK RUNS: {len(runs_list)}")
-            
-            for run in runs_list:
-                logger.info(f"  • {run.run_id}: Hardware {run.hardware_id} at {run.timestamp}")
-            
-            # Get all benchmark files
             files_result = await session.execute(select(BenchmarkFile))
             files_list = files_result.scalars().all()
-            
-            logger.info(f"📁 BENCHMARK FILES: {len(files_list)}")
-            
-            for bf in files_list:
-                data_preview = str(bf.data)[:100] + "..." if bf.data and len(str(bf.data)) > 100 else str(bf.data)
-                logger.info(f"  • {bf.benchmark_type}: Run {bf.benchmark_run_id}, Size {bf.file_size}b")
-                logger.info(f"    Data: {data_preview}")
-            
-            logger.info("=== END DATABASE DUMP ===")
-            
+
+            # Build a JSON-friendly dump
+            dump = {
+                "hardware": [
+                    {
+                        "id": hw.id,
+                        "name": hw.name,
+                        "type": hw.type,
+                        "manufacturer": hw.manufacturer,
+                        "cores": hw.cores,
+                        "framework": hw.framework,
+                        "created_at": hw.created_at.isoformat() if hw.created_at else None,
+                        "updated_at": hw.updated_at.isoformat() if hw.updated_at else None,
+                    }
+                    for hw in hardware_list
+                ],
+                "runs": [
+                    {
+                        "id": r.id,
+                        "run_id": r.run_id,
+                        "hardware_id": r.hardware_id,
+                        "timestamp": r.timestamp.isoformat() if r.timestamp else None,
+                        "run_number": r.run_number,
+                    }
+                    for r in runs_list
+                ],
+                "files": [
+                    {
+                        "id": f.id,
+                        "run_id": f.benchmark_run_id,
+                        "type": f.benchmark_type,
+                        "filename": f.filename,
+                        "size": f.file_size,
+                    }
+                    for f in files_list
+                ]
+            }
+
+            # Also log a compact summary
+            logger.info("=== DATABASE DEBUG DUMP (summary) ===")
+            for hw in dump["hardware"]:
+                logger.info(f"  • {hw['id']}: {hw['name']} ({hw['type']})")
+            logger.info(f"Runs: {len(dump['runs'])}, Files: {len(dump['files'])}")
+            logger.info("=== END DUMP ===")
+
             return {
                 "success": True,
-                "hardware_count": len(hardware_list),
-                "benchmark_runs": len(runs_list), 
-                "benchmark_files": len(files_list),
-                "message": "Database contents dumped to logs",
+                "summary": {
+                    "hardware_count": len(hardware_list),
+                    "benchmark_runs": len(runs_list),
+                    "benchmark_files": len(files_list),
+                },
+                "data": dump,
                 "timestamp": int(time.time())
             }
             
