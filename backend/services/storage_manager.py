@@ -2,6 +2,7 @@ import os
 import json
 import time
 import re
+import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple, Union
 from pathlib import Path
@@ -14,16 +15,19 @@ from sqlalchemy.orm import selectinload
 from database import database, Hardware, BenchmarkRun, BenchmarkFile
 from models import HardwareListData, HardwareSummary, HardwareDetail, BenchmarkFile as BenchmarkFileModel, StoredHardware, UploadResult, ProcessedBenchmarkData
 
+# Configure logging  
+logger = logging.getLogger(__name__)
+
 class StorageManager:
     def __init__(self):
-        self.data_dir = Path(os.environ.get('DATA_DIR', '/app/data'))
+        self.data_dir = Path(os.environ.get('DATA_DIR', './data'))
         self.data_dir.mkdir(parents=True, exist_ok=True)
         
         # Legacy file-based storage directories (for backwards compatibility if needed)
         self.cpu_dir = self.data_dir / 'cpu'
         self.gpu_dir = self.data_dir / 'gpu'
-        self.cpu_dir.mkdir(exist_ok=True)
-        self.gpu_dir.mkdir(exist_ok=True)
+        self.cpu_dir.mkdir(parents=True, exist_ok=True)
+        self.gpu_dir.mkdir(parents=True, exist_ok=True)
 
     async def get_hardware_list(self) -> HardwareListData:
         """Get list of all hardware with benchmark summaries"""
@@ -313,7 +317,19 @@ class StorageManager:
         return False
     
     def _gpu_names_match_with_fallback(self, gpu_name: str, hardware_name: str, all_gpu_entries: list) -> bool:
-        """GPU name matching - for now just use normal matching without fallback"""
+        """GPU name matching with fallback logic for single GPU systems"""
+        # First try exact matching
+        if self._gpu_names_match_single(gpu_name, hardware_name):
+            return True
+        
+        # Special case: if there's only one GPU in the benchmark data and one hardware entry,
+        # assume they match (for single GPU systems)
+        if len(all_gpu_entries) == 1 and gpu_name and hardware_name:
+            # Both are non-empty GPU names, assume they refer to the same physical GPU
+            # This handles cases where naming conventions differ slightly
+            return True
+        
+        # Fall back to normal matching
         return self._gpu_names_match_single(gpu_name, hardware_name)
 
     def _process_llama_data(self, data_list: List[Dict], hardware_type: str, hardware_name: str) -> ProcessedBenchmarkData:
@@ -1026,3 +1042,218 @@ class StorageManager:
                 'total_benchmark_runs': total_runs.scalar() or 0,
                 'benchmark_types': {row[0]: row[1] for row in benchmark_types.all()}
             }
+
+    async def store_unified_benchmark_run(self, run_id: str, hardware_entries: List[StoredHardware], unified_data: Dict[str, Any], timestamp: int) -> UploadResult:
+        """Store a unified benchmark run - simplified approach with direct hw-id mapping"""
+        async with database.get_session() as session:
+            # Extract benchmark data from unified format
+            benchmarks = unified_data.get('benchmarks', {})
+            hardware_devices = unified_data.get('hardware_devices', {})
+            
+            logger.info(f"Storing unified benchmark run {run_id} with {len(hardware_entries)} hardware devices")
+            
+            # Store hardware devices first
+            stored_hardware_ids = []
+            for hw_entry in hardware_entries:
+                # Check if hardware exists, if not create it
+                existing_hw = await session.get(Hardware, hw_entry.hardware_id)
+                
+                if not existing_hw:
+                    # Create new hardware entry using hw-id directly
+                    hardware = Hardware(
+                        id=hw_entry.hardware_id,  # Use hw-id as database ID!
+                        name=hw_entry.name,
+                        type=hw_entry.type,
+                        manufacturer=hw_entry.manufacturer,
+                        created_at=timestamp
+                    )
+                    session.add(hardware)
+                    logger.info(f"  Created new hardware: {hw_entry.hardware_id} - {hw_entry.name}")
+                else:
+                    logger.info(f"  Using existing hardware: {hw_entry.hardware_id} - {existing_hw.name}")
+                
+                stored_hardware_ids.append(hw_entry.hardware_id)
+            
+            # Create benchmark run
+            benchmark_run = BenchmarkRun(
+                id=run_id,
+                created_at=timestamp
+            )
+            session.add(benchmark_run)
+            
+            # Store each benchmark type as a file
+            for benchmark_type, benchmark_data in benchmarks.items():
+                # Find which hardware this benchmark applies to
+                # This is much simpler with unified format - we can directly map hw-ids!
+                applicable_hardware = []
+                
+                if benchmark_type == 'reversan':
+                    # Reversan only runs on CPU
+                    applicable_hardware = [hw for hw in hardware_entries if hw.type == 'cpu']
+                elif benchmark_type == 'sevenzip':
+                    # 7zip runs on CPU
+                    applicable_hardware = [hw for hw in hardware_entries if hw.type == 'cpu']
+                elif benchmark_type in ['llama', 'blender']:
+                    # Llama and Blender can run on both CPU and GPU - include all hardware
+                    applicable_hardware = hardware_entries
+                
+                # Store benchmark file for each applicable hardware
+                for hw_entry in applicable_hardware:
+                    benchmark_file = BenchmarkFile(
+                        benchmark_run_id=run_id,
+                        hardware_id=hw_entry.hardware_id,  # Direct hw-id mapping!
+                        benchmark_type=benchmark_type,
+                        file_content=json.dumps(benchmark_data, indent=2),
+                        created_at=timestamp
+                    )
+                    session.add(benchmark_file)
+                    logger.info(f"  Stored {benchmark_type} for {hw_entry.hardware_id}")
+            
+            # Commit all changes
+            await session.commit()
+            
+            return UploadResult(
+                success=True,
+                run_id=run_id,
+                hardware_processed=stored_hardware_ids,
+                files_processed=list(benchmarks.keys()),
+                message=f"Successfully stored unified benchmark run with {len(benchmarks)} benchmarks for {len(stored_hardware_ids)} hardware devices"
+            )
+
+    async def store_unified_benchmark_run(self, run_id: str, unified_data: Dict[str, Any], timestamp: int) -> Dict[str, Any]:
+        """Store unified benchmark run data directly without legacy format conversion."""
+        logger.info(f"Storing unified benchmark run {run_id} with {len(unified_data.get('hardware_devices', []))} hardware devices")
+        
+        async with database.get_session() as session:
+            try:
+                # Store hardware devices from unified data
+                hardware_entries = []
+                for hw_id, device_data in unified_data.get('hardware_devices', {}).items():
+                    # Check if hardware already exists
+                    existing_hardware = await session.execute(
+                        select(Hardware).where(
+                            Hardware.type == device_data['type'],
+                            Hardware.name == device_data['name']
+                        )
+                    )
+                    hardware = existing_hardware.scalars().first()
+                    
+                    if not hardware:
+                        # Create new hardware entry
+                        hardware = Hardware(
+                            type=device_data['type'],
+                            name=device_data['name'],
+                            manufacturer=device_data.get('manufacturer', 'Unknown')
+                        )
+                        session.add(hardware)
+                        await session.flush()  # Get the ID
+                    
+                    hardware_entries.append(hardware)
+                
+                # Create benchmark run
+                benchmark_run = BenchmarkRun(
+                    run_id=run_id,
+                    timestamp=timestamp
+                )
+                session.add(benchmark_run)
+                await session.flush()  # Get the ID
+                
+                # Store benchmark files for each hardware device and benchmark type
+                stored_files_count = 0
+                for benchmark_type, benchmark_data in unified_data.get('benchmarks', {}).items():
+                    for hw_device in hardware_entries:
+                        # Create filtered data for this specific hardware device
+                        filtered_data = self._extract_hardware_data_from_unified(
+                            benchmark_data, 
+                            hw_device.type, 
+                            hw_device.name,
+                            unified_data.get('hardware_devices', {})
+                        )
+                        
+                        if filtered_data:  # Only store if there's relevant data
+                            benchmark_file = BenchmarkFile(
+                                run_id=benchmark_run.id,
+                                hardware_id=hw_device.id,
+                                benchmark_type=benchmark_type,
+                                file_data=filtered_data
+                            )
+                            session.add(benchmark_file)
+                            stored_files_count += 1
+                
+                await session.commit()
+                logger.info(f"Successfully stored unified run {run_id}: {stored_files_count} benchmark files for {len(hardware_entries)} hardware devices")
+                
+                return {
+                    "run_id": run_id,
+                    "hardware_count": len(hardware_entries),
+                    "benchmark_files_stored": stored_files_count,
+                    "hardware_devices": [f"{hw.type}: {hw.name}" for hw in hardware_entries]
+                }
+                
+            except Exception as e:
+                await session.rollback()
+                logger.error(f"Failed to store unified benchmark run {run_id}: {str(e)}")
+                raise
+    
+    def _extract_hardware_data_from_unified(self, benchmark_data: Dict[str, Any], 
+                                          hardware_type: str, hardware_name: str, 
+                                          hardware_devices: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Extract benchmark data relevant to specific hardware device from unified format."""
+        
+        # Find the hardware device ID that matches this hardware
+        target_hw_id = None
+        for hw_id, device_info in hardware_devices.items():
+            if (device_info.get('type') == hardware_type and 
+                device_info.get('name') == hardware_name):
+                target_hw_id = hw_id
+                break
+        
+        if not target_hw_id:
+            return None
+        
+        # Extract data based on benchmark type and hardware device
+        if not benchmark_data:
+            return None
+        
+        # For unified format, benchmark data should already be organized by hardware ID
+        # Look for data that references our target hardware ID
+        relevant_data = {}
+        
+        # Copy metadata if present
+        if 'metadata' in benchmark_data:
+            relevant_data['metadata'] = benchmark_data['metadata']
+        
+        # Extract hardware-specific results
+        if hardware_type == 'cpu':
+            # For CPU benchmarks, look for CPU results
+            if 'cpu_results' in benchmark_data:
+                relevant_data['cpu_results'] = benchmark_data['cpu_results']
+            elif 'results' in benchmark_data:
+                # Legacy format compatibility
+                relevant_data['results'] = benchmark_data['results']
+        
+        elif hardware_type == 'gpu':
+            # For GPU benchmarks, look for GPU results with matching hardware ID
+            if 'gpu_results' in benchmark_data:
+                gpu_results = benchmark_data['gpu_results']
+                # Filter for our specific GPU
+                matching_results = []
+                for result in gpu_results:
+                    if result.get('hardware_id') == target_hw_id:
+                        matching_results.append(result)
+                
+                if matching_results:
+                    relevant_data['gpu_results'] = matching_results
+            
+            # Also check device_runs for Blender-style data
+            if 'device_runs' in benchmark_data:
+                device_runs = benchmark_data['device_runs']
+                matching_runs = []
+                for run in device_runs:
+                    if run.get('hardware_id') == target_hw_id:
+                        matching_runs.append(run)
+                
+                if matching_runs:
+                    relevant_data['device_runs'] = matching_runs
+        
+        return relevant_data if relevant_data else None

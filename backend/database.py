@@ -75,7 +75,7 @@ class Database:
     def __init__(self, database_url: str = None):
         if database_url is None:
             # Default to SQLite in the data directory
-            data_dir = os.environ.get('DATA_DIR', '/app/data')
+            data_dir = os.environ.get('DATA_DIR', './data')
             os.makedirs(data_dir, exist_ok=True)
             database_url = f"sqlite+aiosqlite:///{data_dir}/benchmarks.db"
         

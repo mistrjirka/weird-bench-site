@@ -1,224 +1,179 @@
-import json
-import jsonschema
-from typing import Dict, Any, Optional
-from pathlib import Path
+"""
+JSON Validator for validating unified benchmark data with comprehensive validation.
+"""
+
+import logging
+from typing import Dict, Any, Tuple, List
+from pydantic import ValidationError
+
+from pydantic_unified_models import UnifiedBenchmarkResult
+
+logger = logging.getLogger(__name__)
+
 
 class JsonValidator:
-    """JSON schema validator for benchmark data"""
+    """Validates unified benchmark data with comprehensive business logic."""
     
-    def __init__(self, schema_dir: str = None):
-        if schema_dir is None:
-            # Default to schemas directory relative to backend
-            self.schema_dir = Path(__file__).parent.parent.parent / 'schemas'
+    def __init__(self):
+        pass
+    
+    def validate_unified_format(self, unified_data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+        """Validate unified benchmark format with comprehensive validation."""
+        error_messages = []
+        
+        try:
+            # First, validate basic Pydantic structure
+            validated_data = UnifiedBenchmarkResult.model_validate(unified_data)
+            
+            # Now perform business logic validation
+            business_errors = self._validate_business_logic(validated_data)
+            error_messages.extend(business_errors)
+            
+            return len(error_messages) == 0, error_messages
+            
+        except ValidationError as e:
+            # Extract error messages from Pydantic validation
+            for error in e.errors():
+                loc = " -> ".join(str(x) for x in error['loc'])
+                msg = error['msg']
+                error_messages.append(f"{loc}: {msg}")
+            return False, error_messages
+        except Exception as e:
+            return False, [f"Unexpected validation error: {str(e)}"]
+    
+    def _validate_business_logic(self, data: UnifiedBenchmarkResult) -> List[str]:
+        """Validate business logic rules for benchmark completeness."""
+        errors = []
+        
+        # Check if any benchmarks are present
+        has_any_benchmark = any([
+            data.llama is not None,
+            data.reversan is not None, 
+            data.sevenzip is not None,
+            data.blender is not None
+        ])
+        
+        if not has_any_benchmark:
+            errors.append("No benchmark results found - at least one benchmark must be present")
+            return errors  # No point in further validation
+        
+        # Get hardware info
+        cpu_device = data.meta.get_cpu_device()
+        gpu_devices = data.meta.get_gpu_devices()
+        
+        if not cpu_device:
+            errors.append("No CPU device found in hardware list")
+        
+        # CPU-only mode validation
+        if data.meta.cpu_only:
+            logger.info("Validating CPU-only benchmark")
+            # In CPU-only mode, GPU benchmarks should not be present
+            gpu_benchmark_errors = self._check_gpu_benchmarks_absent(data)
+            errors.extend(gpu_benchmark_errors)
+            # But CPU benchmarks should still be present
+            cpu_benchmark_errors = self._check_cpu_benchmarks_present(data, cpu_device, is_cpu_only=True)
+            errors.extend(cpu_benchmark_errors)
         else:
-            self.schema_dir = Path(schema_dir)
-        
-        self.schemas = {}
-        self._load_schemas()
-    
-    def _load_schemas(self):
-        """Load all JSON schemas from the schemas directory"""
-        if not self.schema_dir.exists():
-            return
-            
-        for schema_file in self.schema_dir.glob('*.json'):
-            benchmark_type = schema_file.stem.replace('_schema', '')
-            try:
-                with open(schema_file, 'r') as f:
-                    schema = json.load(f)
-                    self.schemas[benchmark_type] = schema
-            except (json.JSONDecodeError, IOError) as e:
-                print(f"Warning: Could not load schema {schema_file}: {e}")
-    
-    def validate_benchmark_data(self, benchmark_type: str, data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
-        """Validate benchmark data against its schema and content structure
-        
-        Returns:
-            tuple: (is_valid, error_message)
-        """
-        # First check basic structure validation for specific benchmark types
-        structural_validation = self._validate_benchmark_structure(benchmark_type, data)
-        if not structural_validation[0]:
-            return structural_validation
-            
-        # Then check against JSON schema if available
-        if benchmark_type not in self.schemas:
-            # No schema available, rely on structural validation
-            return True, None
-        
-        schema = self.schemas[benchmark_type]
-        
-        # All schemas now expect the full wrapper structure (benchmark_name, timestamp, results)
-        # No need to strip the wrapper for validation
-        try:
-            jsonschema.validate(data, schema)
-            return True, None
-        except jsonschema.ValidationError as e:
-            return False, f"Schema validation failed: {e.message}"
-        except Exception as e:
-            return False, f"Validation error: {str(e)}"
-    
-    def _validate_benchmark_structure(self, benchmark_type: str, data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
-        """Validate the structural content of benchmark data"""
-        try:
-            # Handle different data structures - all now have the wrapper structure
-            if benchmark_type == "7zip":
-                # 7zip has data wrapped in "results"
-                if "results" in data:
-                    actual_data = data["results"]
-                else:
-                    actual_data = data
-                return self._validate_7zip_structure(actual_data)
+            logger.info(f"Validating full benchmark with {len(gpu_devices)} GPU(s)")
+            # Full mode - validate GPU benchmarks
+            if not gpu_devices:
+                errors.append("cpu_only is false but no GPU devices found in hardware list")
             else:
-                # Other benchmarks have direct top-level structure inside "results"
-                if "results" in data:
-                    actual_data = data["results"]
-                else:
-                    actual_data = data
-                    
-                if benchmark_type == "blender":
-                    return self._validate_blender_structure(actual_data)
-                elif benchmark_type == "llama":
-                    return self._validate_llama_structure(actual_data)
-                elif benchmark_type == "reversan":
-                    return self._validate_reversan_structure(actual_data)
+                # For GPU-capable benchmarks, require complete results
+                gpu_benchmark_errors = self._check_gpu_benchmarks_complete(data, gpu_devices)
+                errors.extend(gpu_benchmark_errors)
             
-            return True, None
-            
-        except Exception as e:
-            return False, f"Structure validation error: {str(e)}"
+            # Always validate CPU benchmarks are present for CPU-compatible tests
+            cpu_benchmark_errors = self._check_cpu_benchmarks_present(data, cpu_device, is_cpu_only=False)
+            errors.extend(cpu_benchmark_errors)
+        
+        return errors
     
-    def _validate_blender_structure(self, data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
-        """Validate Blender benchmark structure"""
-        # Check for required top-level fields
-        if "device_runs" not in data:
-            return False, "Blender benchmark missing device_runs"
-            
-        device_runs = data["device_runs"]
-        if not device_runs:
-            return False, "Blender benchmark has empty device_runs"
+    def _check_gpu_benchmarks_absent(self, data: UnifiedBenchmarkResult) -> List[str]:
+        """Check that GPU benchmarks are not present in CPU-only mode."""
+        errors = []
         
-        for run in device_runs:
-            # For valid benchmarks, we expect either proper scene_results with data 
-            # OR raw_json with scene data (the processing will extract scene_results)
-            scene_results = run.get("scene_results", {})
-            raw_json = run.get("raw_json", [])
-            
-            # If there's no raw_json data at all, it's definitely malformed
-            if not raw_json:
-                return False, "Blender benchmark missing raw_json data"
-            
-            # Check if raw_json contains valid scene data
-            has_valid_scenes = False
-            for scene_data in raw_json:
-                stats = scene_data.get("stats", {})
-                if stats and "samples_per_minute" in stats:
-                    has_valid_scenes = True
-                    break
-            
-            if not has_valid_scenes:
-                return False, "Blender benchmark missing valid scene data in raw_json"
+        if data.llama and data.llama.gpu_benchmarks:
+            errors.append("CPU-only mode but Llama GPU benchmarks are present")
         
-        return True, None
+        if data.blender and data.blender.gpus:
+            errors.append("CPU-only mode but Blender GPU benchmarks are present")
+        
+        return errors
     
-    def _validate_7zip_structure(self, data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
-        """Validate 7zip benchmark structure"""
-        runs = data.get("runs", [])
+    def _check_gpu_benchmarks_complete(self, data: UnifiedBenchmarkResult, gpu_devices: List) -> List[str]:
+        """Check that GPU benchmarks are complete for all available GPUs."""
+        errors = []
+        gpu_hw_ids = {device.hw_id for device in gpu_devices}
         
-        if not runs:
-            return False, "7zip benchmark missing runs data"
+        # For GPU-capable benchmarks, they must exist and have GPU results
+        gpu_capable_benchmarks = []
         
-        for run in runs:
-            if not run.get("success", False):
-                return False, "7zip benchmark contains failed runs"
-            
-            # Check for required timing data
-            elapsed_seconds = run.get("elapsed_seconds")
-            if not isinstance(elapsed_seconds, (int, float)) or elapsed_seconds <= 0:
-                return False, "7zip benchmark missing valid elapsed_seconds"
+        # Check Llama - GPU-capable benchmark
+        if data.llama is None:
+            errors.append("Llama benchmark is missing but GPUs are available (cpu_only is false)")
+        else:
+            gpu_capable_benchmarks.append("llama")
+            if not data.llama.gpu_benchmarks:
+                errors.append("Llama benchmark missing GPU results despite available GPUs")
+            else:
+                llama_gpu_ids = {run.hw_id for run in data.llama.gpu_benchmarks}
+                missing_llama_gpus = gpu_hw_ids - llama_gpu_ids
+                if missing_llama_gpus:
+                    errors.append(f"Llama benchmark missing GPU results for: {', '.join(missing_llama_gpus)}")
         
-        return True, None
+        # Check Blender - GPU-capable benchmark 
+        if data.blender is None:
+            errors.append("Blender benchmark is missing but GPUs are available (cpu_only is false)")
+        else:
+            gpu_capable_benchmarks.append("blender")
+            if not data.blender.gpus:
+                errors.append("Blender benchmark missing GPU results despite available GPUs")
+            else:
+                blender_gpu_ids = {gpu.hw_id for gpu in data.blender.gpus}
+                missing_blender_gpus = gpu_hw_ids - blender_gpu_ids
+                if missing_blender_gpus:
+                    errors.append(f"Blender benchmark missing GPU results for: {', '.join(missing_blender_gpus)}")
+        
+        logger.info(f"GPU-capable benchmarks validated: {gpu_capable_benchmarks}")
+        return errors
     
-    def _validate_llama_structure(self, data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
-        """Validate Llama benchmark structure"""
-        # Check for CPU runs
-        runs_cpu = data.get("runs_cpu", [])
-        runs_gpu = data.get("runs_gpu", [])
+    def _check_cpu_benchmarks_present(self, data: UnifiedBenchmarkResult, cpu_device, is_cpu_only: bool = False) -> List[str]:
+        """Check that CPU benchmarks are present for CPU-compatible tests."""
+        errors = []
         
-        if not runs_cpu and not runs_gpu:
-            return False, "Llama benchmark missing both CPU and GPU runs"
+        if not cpu_device:
+            return errors  # Already reported missing CPU device
         
-        # Check for required cpu_build_timing data
-        cpu_build_timing = data.get("cpu_build_timing")
-        if not cpu_build_timing:
-            return False, "Llama benchmark missing cpu_build_timing data"
+        # For CPU-capable benchmarks, check they exist and have CPU results
+        cpu_capable_benchmarks = []
         
-        # Validate build timing structure
-        required_timing_fields = ["config_time_seconds", "build_time_seconds", "total_time_seconds"]
-        for field in required_timing_fields:
-            value = cpu_build_timing.get(field)
-            if not isinstance(value, (int, float)) or value <= 0:
-                return False, f"Llama benchmark missing valid {field} in cpu_build_timing"
+        # Check Llama CPU benchmark - required in both modes
+        if data.llama is None:
+            if is_cpu_only:
+                errors.append("Llama benchmark is missing in CPU-only mode")
+            # In full mode, we already report this in GPU validation
+        else:
+            cpu_capable_benchmarks.append("llama")
+            if not data.llama.cpu_benchmark:
+                errors.append("Llama benchmark missing CPU results")
         
-        # Validate run structure - Llama uses returncode (0 = success) instead of success field
-        all_runs = runs_cpu + runs_gpu
-        for run in all_runs:
-            returncode = run.get("returncode")
-            if returncode != 0:
-                return False, "Llama benchmark contains failed runs (non-zero returncode)"
-            
-            # Check for tokens_per_second in metrics (at top level of metrics)
-            metrics = run.get("metrics", {})
-            tokens_per_second = metrics.get("tokens_per_second")
-            if not isinstance(tokens_per_second, (int, float)) or tokens_per_second <= 0:
-                return False, "Llama benchmark missing valid tokens_per_second in metrics"
+        # Check Blender CPU benchmark - required in both modes
+        if data.blender is None:
+            if is_cpu_only:
+                errors.append("Blender benchmark is missing in CPU-only mode")
+            # In full mode, we already report this in GPU validation
+        else:
+            cpu_capable_benchmarks.append("blender")
+            if not data.blender.cpu:
+                errors.append("Blender benchmark missing CPU results")
         
-        return True, None
-    
-    def _validate_reversan_structure(self, data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
-        """Validate Reversan benchmark structure"""
-        runs_depth = data.get("runs_depth", [])
-        runs_threads = data.get("runs_threads", [])
+        # Reversan and 7zip are CPU-only, just check they exist if present
+        # (their presence is already validated by the "has_any_benchmark" check)
+        if data.reversan:
+            cpu_capable_benchmarks.append("reversan")
+        if data.sevenzip:
+            cpu_capable_benchmarks.append("sevenzip")
         
-        if not runs_depth and not runs_threads:
-            return False, "Reversan benchmark missing both depth and thread runs"
-        
-        return True, None
-    
-    def validate_all_benchmarks(self, benchmark_data: Dict[str, Any]) -> Dict[str, tuple[bool, Optional[str]]]:
-        """Validate all benchmark data in a collection
-        
-        Returns:
-            dict: {benchmark_type: (is_valid, error_message)}
-        """
-        results = {}
-        
-        for benchmark_type, data in benchmark_data.items():
-            results[benchmark_type] = self.validate_benchmark_data(benchmark_type, data)
-        
-        return results
-    
-    def are_all_benchmarks_valid(self, benchmark_data: Dict[str, Any]) -> tuple[bool, Dict[str, str]]:
-        """Check if all benchmark data is valid (fail-fast)
-        
-        Returns:
-            tuple: (all_valid, {benchmark_type: error_message} for failed validations)
-        """
-        validation_results = self.validate_all_benchmarks(benchmark_data)
-        errors = {}
-        all_valid = True
-        
-        for benchmark_type, (is_valid, error_message) in validation_results.items():
-            if not is_valid:
-                all_valid = False
-                errors[benchmark_type] = error_message or "Unknown validation error"
-        
-        return all_valid, errors
-    
-    def get_available_schemas(self) -> list[str]:
-        """Get list of available schema types"""
-        return list(self.schemas.keys())
-    
-    def get_schema(self, benchmark_type: str) -> Optional[Dict[str, Any]]:
-        """Get schema for a specific benchmark type"""
-        return self.schemas.get(benchmark_type)
+        logger.info(f"CPU-capable benchmarks validated: {cpu_capable_benchmarks}")
+        return errors
