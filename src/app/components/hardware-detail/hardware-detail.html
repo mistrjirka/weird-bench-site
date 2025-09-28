@@ -105,8 +105,6 @@
                                     @case ('llama') {
                                       <div class="col-md-6">
                                         <p><strong>Type:</strong> {{ getBenchmarkSummary(benchmarkType).type }}</p>
-                                        <p><strong>Prompt Size:</strong> {{ getBenchmarkSummary(benchmarkType).promptSize }} tokens</p>
-                                        <p><strong>Generation Size:</strong> {{ getBenchmarkSummary(benchmarkType).generationSize }} tokens</p>
                                         @if (getBenchmarkSummary(benchmarkType).gpuSelection) {
                                           <div class="mt-2">
                                             <p class="mb-1"><strong>GPU Selection:</strong></p>
@@ -131,20 +129,17 @@
                                         }
                                       </div>
                                       <div class="col-md-6">
-                                        <p><strong>Elapsed Time:</strong> {{ getBenchmarkSummary(benchmarkType).elapsedSeconds | number:'1.2-2' }}s</p>
-                                        <p><strong>Tokens/Second:</strong> 
+                                        <p><strong>Generation Tokens/s:</strong> 
                                           @if (typeof getBenchmarkSummary(benchmarkType).tokensPerSecond === 'number') {
                                             {{ getBenchmarkSummary(benchmarkType).tokensPerSecond | number:'1.2-2' }}
                                           } @else {
                                             {{ getBenchmarkSummary(benchmarkType).tokensPerSecond }}
                                           }
                                         </p>
-                                        <p><strong>Total Tokens:</strong> 
-                                          @if (typeof getBenchmarkSummary(benchmarkType).totalTokens === 'number') {
-                                            {{ getBenchmarkSummary(benchmarkType).totalTokens | number:'1.0-0' }}
-                                          } @else {
-                                            {{ getBenchmarkSummary(benchmarkType).totalTokens }}
-                                          }
+                                        <p><strong>Prompt Tokens/s:</strong>
+                                          @if (typeof getBenchmarkSummary(benchmarkType).promptTokenSpeed === 'number') {
+                                            {{ getBenchmarkSummary(benchmarkType).promptTokenSpeed | number:'1.2-2' }}
+                                          } @else { N/A }
                                         </p>
                                         @if (hardwareType() === 'cpu') {
                                           <p><strong>Compile Time:</strong>
@@ -157,11 +152,7 @@
                                     }
                                     @case ('blender') {
                                       <div class="col-md-6">
-                                        <p><strong>Device:</strong> {{ getBenchmarkSummary(benchmarkType).deviceName }}</p>
-                                        <p><strong>Framework:</strong> {{ getBenchmarkSummary(benchmarkType).framework }}</p>
-                                        <p><strong>Scenes:</strong> {{ getBenchmarkSummary(benchmarkType).scenesCount }}</p>
-                                      </div>
-                                      <div class="col-md-6">
+                           
                                         <p><strong>Scene Scores:</strong></p>
                                         @for (scene of getBenchmarkSummary(benchmarkType).sceneScores; track scene.scene) {
                                           <p class="mb-1">
@@ -176,18 +167,11 @@
                                     }
                                     @case ('7zip') {
                                       <div class="col-md-6">
-                                        <p><strong>Test Data:</strong> {{ getBenchmarkSummary(benchmarkType).testDataSizeMB }}MB</p>
-                                        <p><strong>Best Time:</strong>
-                                          @if (typeof getBenchmarkSummary(benchmarkType).bestTime === 'number') {
-                                            {{ getBenchmarkSummary(benchmarkType).bestTime | number:'1.2-2' }}s
-                                          } @else {
-                                            N/A
-                                          }
-                                        </p>
-                                        <p><strong>Best Threads:</strong> {{ getBenchmarkSummary(benchmarkType).bestThreads }}</p>
+                                        <p><strong>Usage Percent:</strong> {{ getBenchmarkSummary(benchmarkType).usagePercent }}%</p>
+                                        <p><strong>RU MIPS:</strong> {{ getBenchmarkSummary(benchmarkType).ruMips | number }}</p>
                                       </div>
                                       <div class="col-md-6">
-                                        <p><strong>Archive Size:</strong> {{ (getBenchmarkSummary(benchmarkType).archiveSize / 1024 / 1024) | number:'1.2-2' }}MB</p>
+                                        <p><strong>Total MIPS:</strong> {{ getBenchmarkSummary(benchmarkType).totalMips | number }}</p>
                                         <p><strong>Total Runs:</strong> {{ getBenchmarkSummary(benchmarkType).totalRuns }}</p>
                                       </div>
                                     }
@@ -195,13 +179,6 @@
                                       <div class="col-md-6">
                                         <p><strong>Depth Tests:</strong> {{ getBenchmarkSummary(benchmarkType).depthTests }}</p>
                                         <p><strong>Thread Tests:</strong> {{ getBenchmarkSummary(benchmarkType).threadTests }}</p>
-                                        <p><strong>Build Time:</strong>
-                                          @if (typeof getBenchmarkSummary(benchmarkType).buildTime === 'number') {
-                                            {{ getBenchmarkSummary(benchmarkType).buildTime | number:'1.2-2' }}s
-                                          } @else {
-                                            N/A
-                                          }
-                                        </p>
                                         <p><strong>Depth 10 Time:</strong>
                                           @if (typeof getBenchmarkSummary(benchmarkType).depth10Time === 'number') {
                                             {{ getBenchmarkSummary(benchmarkType).depth10Time | number:'1.2-2' }}s
@@ -272,31 +249,20 @@
                                               {{ getBenchmarkSummary(benchmarkType).tokensPerSecond }}
                                             }
                                           </h4>
-                                          <small class="text-muted">Tokens/Second</small>
-                                        </div>
-                                      </div>
-                                      <div class="col-md-4">
-                                        <div class="text-center">
-                                          <h4 class="text-success">
-                                            @if (typeof getBenchmarkSummary(benchmarkType).elapsedSeconds === 'number') {
-                                              {{ getBenchmarkSummary(benchmarkType).elapsedSeconds | number:'1.1-1' }}s
-                                            } @else { N/A }
-                                          </h4>
-                                          <small class="text-muted">Total Time</small>
+                                          <small class="text-muted">Generation Tokens/s</small>
                                         </div>
                                       </div>
                                       <div class="col-md-4">
                                         <div class="text-center">
                                           <h4 class="text-info">
-                                            @if (typeof getBenchmarkSummary(benchmarkType).totalTokens === 'number') {
-                                              {{ getBenchmarkSummary(benchmarkType).totalTokens | number:'1.0-0' }}
-                                            } @else {
-                                              {{ getBenchmarkSummary(benchmarkType).totalTokens }}
-                                            }
+                                            @if (typeof getBenchmarkSummary(benchmarkType).promptTokenSpeed === 'number') {
+                                              {{ getBenchmarkSummary(benchmarkType).promptTokenSpeed | number:'1.1-1' }}
+                                            } @else { N/A }
                                           </h4>
-                                          <small class="text-muted">Total Tokens</small>
+                                          <small class="text-muted">Prompt Tokens/s</small>
                                         </div>
                                       </div>
+                                      
                                       @if (hardwareType() === 'cpu') {
                                         <div class="col-md-4 mt-3">
                                           <div class="text-center">
@@ -311,22 +277,6 @@
                                       }
                                     }
                                     @case ('blender') {
-                                      <div class="col-md-6">
-                                        <div class="text-center">
-                                          <h4 class="text-success">
-                                            @if (typeof getBenchmarkSummary(benchmarkType).elapsedSeconds === 'number') {
-                                              {{ getBenchmarkSummary(benchmarkType).elapsedSeconds | number:'1.1-1' }}s
-                                            } @else { N/A }
-                                          </h4>
-                                          <small class="text-muted">Total Render Time</small>
-                                        </div>
-                                      </div>
-                                      <div class="col-md-6">
-                                        <div class="text-center">
-                                          <h4 class="text-info">{{ getBenchmarkSummary(benchmarkType).scenesCount }}</h4>
-                                          <small class="text-muted">Scenes Tested</small>
-                                        </div>
-                                      </div>
                                       
                                       <!-- Scene-specific scores -->
                                       <div class="col-12 mt-3">
@@ -355,14 +305,20 @@
                                     @case ('7zip') {
                                       <div class="col-md-4">
                                         <div class="text-center">
-                                          <h4 class="text-primary">{{ getBenchmarkSummary(benchmarkType).bestTime | number:'1.1-1' }}s</h4>
-                                          <small class="text-muted">Best Time</small>
+                                          <h4 class="text-primary">{{ getBenchmarkSummary(benchmarkType).totalMips | number }}M</h4>
+                                          <small class="text-muted">Total MIPS</small>
                                         </div>
                                       </div>
-                                      <div class="col-md-6">
+                                      <div class="col-md-4">
                                         <div class="text-center">
-                                          <h4 class="text-success">{{ getBenchmarkSummary(benchmarkType).bestThreads }}</h4>
-                                          <small class="text-muted">Best Threads</small>
+                                          <h4 class="text-success">{{ getBenchmarkSummary(benchmarkType).ruMips | number }}M</h4>
+                                          <small class="text-muted">RU MIPS</small>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-4">
+                                        <div class="text-center">
+                                          <h4 class="text-info">{{ getBenchmarkSummary(benchmarkType).usagePercent }}%</h4>
+                                          <small class="text-muted">CPU Usage</small>
                                         </div>
                                       </div>
                                     }
@@ -389,12 +345,6 @@
                                             }
                                           </h4>
                                           <small class="text-muted">Best Thread Time</small>
-                                        </div>
-                                      </div>
-                                      <div class="col-md-4">
-                                        <div class="text-center">
-                                          <h4 class="text-info">{{ getBenchmarkSummary(benchmarkType).buildTime | number:'1.2-2' }}s</h4>
-                                          <small class="text-muted">Build Time</small>
                                         </div>
                                       </div>
                                     }

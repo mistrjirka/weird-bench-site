@@ -54,6 +54,7 @@ export class HardwareExtractionService {
       id: this.generateHardwareId('cpu', cpuName),
       name: cpuName,
       type: 'cpu',
+      manufacturer: 'Unknown',
       cores: 0, // Not available from 7zip
       threads: Math.max(...data.runs.map(r => r.threads)) // Max threads used
     };
@@ -73,6 +74,7 @@ export class HardwareExtractionService {
       id: this.generateHardwareId('cpu', cpuName),
       name: cpuName,
       type: 'cpu',
+      manufacturer: 'Unknown',
       cores: 0, // Not directly available
       threads: data.runs_threads ? Math.max(...data.runs_threads.map(r => r.threads)) : 1
     };
@@ -97,6 +99,7 @@ export class HardwareExtractionService {
             id: this.generateHardwareId('cpu', deviceRun.device_name),
             name: deviceRun.device_name,
             type: 'cpu',
+            manufacturer: 'Unknown',
             cores: 0,
             threads: run.metrics.system_info.n_threads
           };
@@ -107,8 +110,9 @@ export class HardwareExtractionService {
             id: this.generateHardwareId('gpu', deviceRun.device_name),
             name: deviceRun.device_name,
             type: 'gpu',
-            memory: 0,
-            deviceFramework: this.mapBackendToFramework(run.metrics.system_info.backends)
+            manufacturer: 'Unknown',
+            memory_mb: 0,
+            framework: this.mapBackendToFramework(run.metrics.system_info.backends)
           };
           hardware.push(gpu);
         }
@@ -125,6 +129,7 @@ export class HardwareExtractionService {
           id: this.generateHardwareId('cpu', cpuInfo),
           name: cpuInfo,
           type: 'cpu',
+          manufacturer: 'Unknown',
           cores: 0, // Could be extracted from name parsing
           threads: cpuRun.metrics.system_info.n_threads
         };
@@ -142,8 +147,9 @@ export class HardwareExtractionService {
             id: this.generateHardwareId('gpu', gpuInfo),
             name: gpuInfo,
             type: 'gpu',
-            memory: 0, // Not directly available
-            deviceFramework: this.mapBackendToFramework(gpuRun.metrics.system_info.backends)
+            manufacturer: 'Unknown',
+            memory_mb: 0, // Not directly available
+            framework: this.mapBackendToFramework(gpuRun.metrics.system_info.backends)
           };
           
           hardware.push(gpu);
@@ -172,6 +178,7 @@ export class HardwareExtractionService {
                 id: this.generateHardwareId('cpu', device.name),
                 name: device.name,
                 type: 'cpu',
+                manufacturer: 'Unknown',
                 cores: rawResult.system_info.num_cpu_cores || 0,
                 threads: rawResult.system_info.num_cpu_threads || 0
               };
@@ -181,8 +188,9 @@ export class HardwareExtractionService {
                 id: this.generateHardwareId('gpu', device.name),
                 name: device.name,
                 type: 'gpu',
-                memory: 0, // Could be extracted from device memory info if available
-                deviceFramework: device.type as any
+                manufacturer: 'Unknown',
+                memory_mb: 0, // Could be extracted from device memory info if available
+                framework: device.type as any
               };
               hardware.push(gpu);
             }

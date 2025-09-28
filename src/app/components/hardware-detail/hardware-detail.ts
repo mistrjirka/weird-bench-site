@@ -46,35 +46,31 @@ export class HardwareDetail implements OnInit {
   private loadHardwareDetails(type: 'cpu' | 'gpu', id: string) {
     this.isLoading.set(true);
     this.error.set(null);
+    console.log('Loading hardware details for:', type, id);
 
     // Load hardware detail information
     this.hardwareService.loadHardwareDetail(type, id).subscribe({
-      next: (detail) => {
-        this.hardware.set(detail.hardware);
-        this.loadBenchmarkFiles(type, id);
+      next: (detail: any) => {
+        console.log('Hardware detail response:', detail);
+        if (detail && detail.hardware) {
+          this.hardware.set(detail.hardware);
+          // Use the processed benchmarks from the detail response
+          console.log('Setting processed benchmarks:', detail.processed_benchmarks || []);
+          this.processedBenchmarkData.set(detail.processed_benchmarks || []);
+        } else {
+          this.error.set('Hardware not found');
+        }
+        this.isLoading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
+        console.error('Hardware detail loading error:', error);
         this.error.set(`Failed to load hardware details: ${error.message}`);
         this.isLoading.set(false);
       }
     });
   }
 
-  private loadBenchmarkFiles(type: 'cpu' | 'gpu', id: string) {
-    // Load processed benchmark data
-    this.hardwareService.loadProcessedBenchmarkData(type, id).subscribe({
-      next: (processedData) => {
-        console.log("Processed benchmark data:", processedData);
-        this.processedBenchmarkData.set(processedData);
-        this.isLoading.set(false);
-      },
-      error: (error) => {
-        console.error('Failed to load processed benchmark data:', error);
-        this.error.set('Failed to load benchmark data');
-        this.isLoading.set(false);
-      }
-    });
-  }
+  // Removed loadBenchmarkFiles - no longer needed
 
   clearError() {
     this.error.set(null);
@@ -82,11 +78,13 @@ export class HardwareDetail implements OnInit {
 
   getBenchmarkTypes(): string[] {
     const processedData = this.processedBenchmarkData();
-    const types = processedData.map(d => d.benchmark_type);
+    console.log('getBenchmarkTypes - All processed data:', processedData);
+    const types = processedData.map((d: any) => d.benchmark_type);
+    console.log('getBenchmarkTypes - Extracted types:', types);
     
     if (this.hardwareType() === 'gpu') {
       // Ensure only GPU-relevant benchmarks are shown
-      return types.filter(t => t === 'llama' || t === 'blender');
+      return types.filter((t: string) => t === 'llama' || t === 'blender');
     }
     return types;
   }
@@ -98,7 +96,11 @@ export class HardwareDetail implements OnInit {
 
   getProcessedBenchmarkData(benchmarkType: string): ProcessedBenchmarkData | null {
     const processedData = this.processedBenchmarkData();
-    return processedData.find(d => d.benchmark_type === benchmarkType) || null;
+    console.log('All processed data:', processedData);
+    console.log('Looking for benchmark type:', benchmarkType);
+    const result = processedData.find((d: any) => d.benchmark_type === benchmarkType) || null;
+    console.log('Found data for', benchmarkType, ':', result);
+    return result;
   }
 
   // Legacy method for backward compatibility - now returns processed data
@@ -198,20 +200,101 @@ export class HardwareDetail implements OnInit {
   }
 
   getBenchmarkSummary(benchmarkType: string): any {
-    const data = this.getFilteredBenchmarkData(benchmarkType);
-    if (!data) return null;
+    const processedData = this.getProcessedBenchmarkData(benchmarkType);
+    if (!processedData || !processedData.median_values) return null;
 
+    const medianValues = processedData.median_values;
     const hardwareType = this.hardwareType();
     
     switch (benchmarkType) {
       case 'llama':
-        return this.summarizeLlamaBenchmark(data);
+        return {
+          type: hardwareType === 'cpu' ? 'CPU' : 'GPU',
+          tokensPerSecond: medianValues['generation_token_speed'],
+          promptTokenSpeed: medianValues['prompt_token_speed'],
+          // Treat non-number or non-positive compile times as null (N/A)
+          compileTimeSeconds: (typeof medianValues['compilation_time'] === 'number' && medianValues['compilation_time'] > 0)
+            ? medianValues['compilation_time']
+            : null,
+          gpuSelection: null // Not available in new format
+        };
       case 'blender':
-        return this.summarizeBlenderBenchmark(data);
+        // Prefer processed data_points when available; fallback to median_values keys
+        const dp = Array.isArray(processedData.data_points) ? processedData.data_points : [];
+        let sceneScores: Array<{ scene: string; samplesPerMinute: number; elapsedSeconds?: number | null }>; 
+        if (dp.length > 0) {
+          sceneScores = dp
+            .map((p: any) => ({
+              scene: p.scene,
+              samplesPerMinute: p.samples_per_minute_median,
+              elapsedSeconds: p.elapsed_seconds_median
+            }))
+            .filter(s => typeof s.scene === 'string' && typeof s.samplesPerMinute === 'number');
+        } else {
+          // Support simplified median_values with per-scene SPM under known keys
+          const candidates: Array<{ key: string; label: string }> = [
+            { key: 'classroom', label: 'classroom' },
+            { key: 'junkshop', label: 'junkshop' },
+            { key: 'monster', label: 'monster' }
+          ];
+          sceneScores = candidates
+            .map(c => ({ scene: c.label, samplesPerMinute: medianValues[c.key] }))
+            .filter((s: any) => typeof s.samplesPerMinute === 'number');
+        }
+
+        // Elapsed total time if provided by data_points
+        const totalElapsed = dp
+          .map((p: any) => p.elapsed_seconds_median)
+          .filter((v: any) => typeof v === 'number') as number[];
+        const elapsedSeconds = totalElapsed.length > 0 ? totalElapsed.reduce((a, b) => a + b, 0) : null;
+
+        return {
+          deviceName: null, // Not available in simplified frontend path
+          framework: null, // Not available in simplified frontend path
+          scenesCount: (processedData.stats && typeof (processedData.stats as any)['scenes'] === 'number') ? (processedData.stats as any)['scenes'] : sceneScores.length,
+          elapsedSeconds,
+          sceneScores
+        };
       case '7zip':
-        return this.summarize7zipBenchmark(data);
+        return {
+          testDataSizeMB: null, // Not available in new format
+          bestTime: null, // Not available in new format
+          bestThreads: null, // Not available in new format
+          archiveSize: null, // Not available in new format
+          compressionRatio: null,
+          totalRuns: 1,
+          averageTime: null, // Not available in new format
+          usagePercent: medianValues['usage_percent'],
+          ruMips: medianValues['ru_mips'],
+          totalMips: medianValues['total_mips'],
+          threadData: [] // Not available in simplified format
+        };
       case 'reversan':
-        return this.summarizeReversanBenchmark(data);
+        // Map backend median arrays to objects with elapsedSeconds to preserve decimals in UI and charts
+        const depthRaw = Array.isArray(medianValues['depth_times']) ? medianValues['depth_times'] : [];
+        const threadRaw = Array.isArray(medianValues['thread_times']) ? medianValues['thread_times'] : [];
+        const depthData = depthRaw
+          .map((d: any) => ({ depth: d.depth, elapsedSeconds: typeof d.time === 'number' ? d.time : null }))
+          .filter((d: any) => typeof d.elapsedSeconds === 'number');
+        const threadData = threadRaw
+          .map((t: any) => ({ threads: t.threads, elapsedSeconds: typeof t.time === 'number' ? t.time : null }))
+          .filter((t: any) => typeof t.elapsedSeconds === 'number');
+
+        const depth10 = depthData.find((d: any) => d.depth === 10) || null;
+        const bestThread = threadData.length > 0
+          ? threadData.reduce((min: any, t: any) => (t.elapsedSeconds < min.elapsedSeconds ? t : min), threadData[0])
+          : null;
+        return {
+          depthTests: depthData.length,
+          threadTests: threadData.length,
+          buildTime: null, // Not available in new format
+          bestDepthTime: depth10 ? depth10.elapsedSeconds : null,
+          bestThreadTime: bestThread ? bestThread.elapsedSeconds : null,
+          bestThreadCount: bestThread ? bestThread.threads : null,
+          depth10Time: depth10 ? depth10.elapsedSeconds : null,
+          depthData: depthData,
+          threadData: threadData
+        };
       default:
         return null;
     }

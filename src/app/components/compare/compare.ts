@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { ComparisonService } from '../../services/comparison.service';
 import { HardwareDataService } from '../../services/hardware-data.service';
 import { ProcessedBenchmarkData } from '../../models/benchmark.models';
+import { forkJoin } from 'rxjs';
 
 type BenchName = 'llama' | 'blender' | '7zip' | 'reversan';
 
@@ -45,15 +46,17 @@ export class CompareComponent implements OnInit {
     this.leftName.set(leftSummary?.hardware.name ?? a);
     this.rightName.set(rightSummary?.hardware.name ?? b);
 
-    // Load processed benchmark data for both sides
-    Promise.all([
-      this.data.loadProcessedBenchmarkData(type, a).toPromise(),
-      this.data.loadProcessedBenchmarkData(type, b).toPromise()
-    ]).then(([la, lb]) => {
+    // Load processed benchmark data for both sides using hardware-detail API
+    forkJoin([
+      this.data.loadHardwareDetail(type, a),
+      this.data.loadHardwareDetail(type, b)
+  ]).subscribe(([leftDetail, rightDetail]: any[]) => {
       const leftMap: Record<string, ProcessedBenchmarkData> = {};
       const rightMap: Record<string, ProcessedBenchmarkData> = {};
-      (la || []).forEach(d => { leftMap[d.benchmark_type] = d; });
-      (lb || []).forEach(d => { rightMap[d.benchmark_type] = d; });
+      const leftPb = (leftDetail?.processed_benchmarks ?? []) as ProcessedBenchmarkData[];
+      const rightPb = (rightDetail?.processed_benchmarks ?? []) as ProcessedBenchmarkData[];
+      leftPb.forEach(d => { if (d && d.benchmark_type) leftMap[d.benchmark_type] = d; });
+      rightPb.forEach(d => { if (d && d.benchmark_type) rightMap[d.benchmark_type] = d; });
       this.leftBench.set(leftMap);
       this.rightBench.set(rightMap);
     });

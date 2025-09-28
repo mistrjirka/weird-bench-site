@@ -1,4 +1,6 @@
-// Common benchmark metadata
+// Simplified models matching the new API - no legacy support
+
+// Common benchmark metadata (kept for compatibility)
 export interface BenchmarkMeta {
   benchmark_name: string;
   host: string;
@@ -6,19 +8,65 @@ export interface BenchmarkMeta {
   timestamp: number;
 }
 
-// Hardware information extracted from benchmarks
-export interface HardwareInfo {
+// Performance metrics (kept for compatibility)
+export interface PerformanceMetrics {
+  elapsed_seconds: number;
+  throughput?: number;
+  memory_usage_mb?: number;
+  [key: string]: any; // Allow additional metrics
+}
+
+// Build timing information (kept for compatibility)
+export interface BuildTiming {
+  config_time_seconds: number;
+  build_time_seconds: number;
+  total_time_seconds: number;
+}
+
+// Clean hardware information from the simplified API
+export interface CleanHardwareInfo {
   id: string;
   name: string;
   type: 'cpu' | 'gpu';
-  manufacturer?: string;
-  architecture?: string;
+  manufacturer: string;
   cores?: number;
   threads?: number;
-  clockSpeed?: number;
-  memory?: number; // In MB for GPU, GB for system
-  framework?: string; // For GPUs: CUDA, HIP, OPENCL, etc.
-  deviceFramework?: string; // Alternative name for framework
+  framework?: string;
+  memory_mb?: number;
+}
+
+// Benchmark summary from the API
+export interface BenchmarkSummary {
+  total_benchmarks: number;
+  benchmark_types: string[];
+  latest_run: number;
+  best_performance?: { [key: string]: any };
+}
+
+// Clean hardware summary from the simplified API
+export interface CleanHardwareSummary {
+  hardware: CleanHardwareInfo;
+  benchmarks: BenchmarkSummary;
+  comparison_url: string;
+}
+
+// Simplified hardware list response
+export interface SimpleHardwareListData {
+  cpus: CleanHardwareSummary[];
+  gpus: CleanHardwareSummary[];
+  total_hardware: number;
+  total_benchmarks: number;
+  supported_benchmarks: string[];
+}
+
+export interface SimpleHardwareListResponse {
+  data: SimpleHardwareListData;
+  timestamp: number;
+}
+
+// For backward compatibility with existing components
+export interface HardwareInfo extends CleanHardwareInfo {
+  // Kept for compatibility
 }
 
 // CPU specific information
@@ -33,27 +81,10 @@ export interface CpuInfo extends HardwareInfo {
 // GPU specific information
 export interface GpuInfo extends HardwareInfo {
   type: 'gpu';
-  memory: number; // Memory in MB
+  memory_mb: number; // Memory in MB
   framework?: string; // CUDA, HIP, OPENCL, etc.
-  deviceFramework?: string; // Alternative name for framework
 }
 
-// Build timing information (for compile-time benchmarks)
-export interface BuildTiming {
-  config_time_seconds: number;
-  build_time_seconds: number;
-  total_time_seconds: number;
-}
-
-// Performance metrics for different benchmark types
-export interface PerformanceMetrics {
-  elapsed_seconds: number;
-  throughput?: number;
-  memory_usage_mb?: number;
-  [key: string]: any; // Allow additional metrics
-}
-
-// Benchmark result summary for hardware listing
 export interface HardwareSummary {
   hardware: HardwareInfo;
   benchmarkCount: number;
@@ -68,8 +99,20 @@ export interface HardwareSummary {
   };
 }
 
-// API response types
-// Additional interfaces for processed benchmark data
+// Hardware detail response
+export interface HardwareDetail {
+  hardware: CleanHardwareInfo;
+  benchmarks: BenchmarkSummary;
+  benchmark_history: Array<{ benchmark_type: string; timestamp: number; run_id: string }>;
+  processed_benchmarks: ProcessedBenchmarkData[];
+}
+
+export interface HardwareDetailResponse {
+  data: HardwareDetail;
+  timestamp: number;
+}
+
+// API response types - simplified without success field
 export interface ProcessedBenchmarkData {
   benchmark_type: string;
   hardware_type: 'cpu' | 'gpu';
@@ -81,42 +124,43 @@ export interface ProcessedBenchmarkData {
 }
 
 export interface ProcessedDataPoint {
-  group: string;
-  run_count: number;
+  group?: string;
+  run_count?: number;
   // Type-specific properties
   type?: string; // For reversan (depth/threads)
   depth?: number; // For reversan depth tests
   threads?: number; // For reversan thread tests
   thread_count?: number; // For 7zip
   tokens_per_second_median?: number; // For llama
+  tokens_per_second?: number; // For llama
   nodes_per_second_median?: number; // For reversan
   render_time_median?: number; // For blender
+  render_time?: number; // For blender
   compression_mips_median?: number; // For 7zip
   decompression_mips_median?: number; // For 7zip
   total_mips_median?: number; // For 7zip
+  total_mips?: number; // For 7zip
+  elapsed_seconds?: number; // For reversan
+  scene?: string; // For blender
+  run_data?: any; // Additional run data
   [key: string]: any; // For additional benchmark-specific metrics
 }
 
 export interface ProcessedBenchmarkResponse {
-  success: boolean;
   data: ProcessedBenchmarkData[];
   timestamp: number;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
+// For backward compatibility - old response format
+export interface HardwareListResponse {
+  data: {
+    cpus: HardwareSummary[];
+    gpus: HardwareSummary[];
+  };
   timestamp: number;
 }
 
-export interface HardwareListResponse {
-  cpus: HardwareSummary[];
-  gpus: HardwareSummary[];
-  totalCount: number;
-}
-
-export interface HardwareDetailResponse {
+export interface OldHardwareDetailResponse {
   hardware: HardwareInfo;
   benchmarks: BenchmarkResult[];
   charts?: ChartData[];

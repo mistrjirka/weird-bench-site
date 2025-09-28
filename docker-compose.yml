@@ -15,6 +15,8 @@ services:
       - ./tsconfig.json:/app/tsconfig.json:ro
       - ./tsconfig.app.json:/app/tsconfig.app.json:ro
       - ./tsconfig.spec.json:/app/tsconfig.spec.json:ro
+      # Mount proxy configuration
+      - ./proxy.conf.json:/app/proxy.conf.json:ro
     environment:
       - NODE_ENV=development
     restart: unless-stopped

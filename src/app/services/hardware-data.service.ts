@@ -1,42 +1,15 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, map, catchError, of, forkJoin, switchMap } from 'rxjs';
+import { Observable, map, catchError, of } from 'rxjs';
 import { 
   HardwareInfo, 
   HardwareSummary, 
-  HardwareListResponse, 
-  HardwareDetailResponse,
-  ProcessedBenchmarkResponse,
+  SimpleHardwareListResponse,
+  CleanHardwareSummary,
+  HardwareListResponse,
   ProcessedBenchmarkData
 } from '../models/benchmark.models';
 import { environment } from '../../environments/environment';
-
-// Interface for the static index.json structure
-interface HardwareIndex {
-  hardware: {
-    cpus: IndexHardware[];
-    gpus: IndexHardware[];
-  };
-  metadata: {
-    totalHardware: number;
-    totalBenchmarks: number;
-    lastUpdated: number;
-    version: string;
-    benchmarkTypes: string[];
-  };
-}
-
-interface IndexHardware {
-  id: string;
-  name: string;
-  manufacturer: string;
-  cores?: number; // For CPUs
-  framework?: string; // For GPUs
-  benchmarks: {
-    [key: string]: string[]; // benchmark type -> list of file paths
-  };
-  lastUpdated: number;
-}
 
 @Injectable({
   providedIn: 'root'
@@ -50,11 +23,11 @@ export class HardwareDataService {
   private readonly _isLoading = signal<boolean>(false);
   private readonly _error = signal<string | null>(null);
 
-  // Public readonly signals
-  readonly cpuList = this._cpuList.asReadonly();
-  readonly gpuList = this._gpuList.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
+  // Public computed signals
+  readonly cpuList = computed(() => this._cpuList());
+  readonly gpuList = computed(() => this._gpuList());
+  readonly isLoading = computed(() => this._isLoading());
+  readonly error = computed(() => this._error());
   
   // Computed values
   readonly totalHardwareCount = computed(() => 
@@ -64,12 +37,16 @@ export class HardwareDataService {
   readonly hasData = computed(() => 
     this.cpuList().length > 0 || this.gpuList().length > 0
   );
+  
+  // Computed combined list for easier access
+  readonly allHardware = computed(() => [...this.cpuList(), ...this.gpuList()]);
+  readonly totalCount = computed(() => this.allHardware().length);
 
   constructor(private http: HttpClient) {
-    this.loadHardwareList();
+    // Auto-load on initialization
+    this.loadHardwareList().subscribe();
   }
 
-  // Shared metrics helpers
   public median(values: number[]): number | null {
     const arr = values.filter(v => typeof v === 'number' && !isNaN(v)).sort((a, b) => a - b);
     if (!arr.length) return null;
@@ -78,184 +55,198 @@ export class HardwareDataService {
   }
 
   /**
-   * Load the list of all hardware with benchmark summaries from API
+   * Load hardware list from the simplified API
    */
   loadHardwareList(): Observable<HardwareListResponse> {
     this._isLoading.set(true);
     this._error.set(null);
 
-    return this.http.get<any>(`${this.apiBaseUrl}/hardware`).pipe(
+    return this.http.get<SimpleHardwareListResponse>(`${this.apiBaseUrl}/hardware`).pipe(
       map(response => {
-        // Convert API response to HardwareSummary format
-        const hardwareData = response.data || {};
+        // Convert new API response to legacy format for backward compatibility
+        const hardwareData = response.data;
         
-        // Process CPUs
-        const cpus: HardwareSummary[] = (hardwareData.cpus || []).map((hw: any) => ({
+        // Convert clean summaries to legacy HardwareSummary format
+        const cpus: HardwareSummary[] = hardwareData.cpus.map((cleanSummary: CleanHardwareSummary) => ({
           hardware: {
-            id: hw.id,
-            name: hw.name,
-            type: 'cpu' as const,
-            manufacturer: hw.manufacturer,
-            ...(hw.cores ? { cores: hw.cores } : {})
-          },
-          benchmarkCount: Object.values(hw.benchmarks || {}).reduce((sum: number, arr: any) => 
-            sum + (Array.isArray(arr) ? arr.length : 0), 0),
-          lastUpdated: new Date(hw.lastUpdated * 1000),
-          bestPerformance: undefined,
+            id: cleanSummary.hardware.id,
+            name: cleanSummary.hardware.name,
+            type: cleanSummary.hardware.type,
+            manufacturer: cleanSummary.hardware.manufacturer,
+            cores: cleanSummary.hardware.cores,
+            threads: cleanSummary.hardware.threads,
+            framework: cleanSummary.hardware.framework,
+            memory_mb: cleanSummary.hardware.memory_mb
+          } as HardwareInfo,
+          benchmarkCount: cleanSummary.benchmarks.total_benchmarks,
+          lastUpdated: new Date(cleanSummary.benchmarks.latest_run * 1000),
+          bestPerformance: cleanSummary.benchmarks.best_performance ? {
+            benchmark: 'mixed',
+            value: 0,
+            unit: 'mixed'
+          } : undefined,
           averagePerformance: {}
         }));
 
-        // Process GPUs
-        const gpus: HardwareSummary[] = (hardwareData.gpus || []).map((hw: any) => ({
+        const gpus: HardwareSummary[] = hardwareData.gpus.map((cleanSummary: CleanHardwareSummary) => ({
           hardware: {
-            id: hw.id,
-            name: hw.name,
-            type: 'gpu' as const,
-            manufacturer: hw.manufacturer,
-            ...(hw.framework ? { framework: hw.framework } : {})
-          },
-          benchmarkCount: Object.values(hw.benchmarks || {}).reduce((sum: number, arr: any) => 
-            sum + (Array.isArray(arr) ? arr.length : 0), 0),
-          lastUpdated: new Date(hw.lastUpdated * 1000),
-          bestPerformance: undefined,
+            id: cleanSummary.hardware.id,
+            name: cleanSummary.hardware.name,
+            type: cleanSummary.hardware.type,
+            manufacturer: cleanSummary.hardware.manufacturer,
+            cores: cleanSummary.hardware.cores,
+            threads: cleanSummary.hardware.threads,
+            framework: cleanSummary.hardware.framework,
+            memory_mb: cleanSummary.hardware.memory_mb
+          } as HardwareInfo,
+          benchmarkCount: cleanSummary.benchmarks.total_benchmarks,
+          lastUpdated: new Date(cleanSummary.benchmarks.latest_run * 1000),
+          bestPerformance: cleanSummary.benchmarks.best_performance ? {
+            benchmark: 'mixed',
+            value: 0,
+            unit: 'mixed'
+          } : undefined,
           averagePerformance: {}
         }));
 
-        // Update signals
+        // Update reactive state
         this._cpuList.set(cpus);
         this._gpuList.set(gpus);
         this._isLoading.set(false);
 
+        // Return in legacy format
         return {
-          cpus,
-          gpus,
-          totalCount: cpus.length + gpus.length
-        };
+          data: { cpus, gpus },
+          timestamp: response.timestamp
+        } as HardwareListResponse;
       }),
       catchError(error => {
         console.error('Failed to load hardware list:', error);
         this._error.set('Failed to load hardware list');
         this._isLoading.set(false);
         return of({
-          cpus: [],
-          gpus: [],
-          totalCount: 0
-        });
+          data: { cpus: [], gpus: [] },
+          timestamp: Date.now()
+        } as HardwareListResponse);
       })
     );
   }
 
   /**
-   * Load detailed information for specific hardware from API
+   * Load detailed information for specific hardware
    */
-  loadHardwareDetail(type: 'cpu' | 'gpu', id: string): Observable<HardwareDetailResponse> {
-    this._isLoading.set(true);
-    this._error.set(null);
-
-    return this.http.get<any>(`${this.apiBaseUrl}/hardware-detail?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
+  loadHardwareDetail(type: 'cpu' | 'gpu', id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiBaseUrl}/hardware-detail?type=${type}&id=${id}`).pipe(
       map(response => {
-        const hardwareData = response.data;
-        if (!hardwareData) {
-          console.log('Hardware detail response:', response);
-          throw new Error(`Hardware ${type}/${id} not found`);
+        // Handle new flat API response format
+        if (response && response.success && response.hardware) {
+          // Convert the new flat format to expected structure
+          const convertedResponse: any = {
+            hardware: response.hardware,
+            // Convert flat benchmark data to processed_benchmarks format for compatibility
+            processed_benchmarks: [] as any[]
+          };
+          
+          // Add benchmark data if present
+          if (response.llama) {
+            convertedResponse.processed_benchmarks.push({
+              benchmark_type: 'llama',
+              hardware_type: type,
+              data_points: [],
+              median_values: response.llama,
+              stats: {},
+              file_count: 1,
+              valid_file_count: 1
+            });
+          }
+          
+          if (response.reversan) {
+            // Map depth/thread arrays into typed data_points for UI/compare
+            const depth = (response.reversan.depth_times || []).map((d: any) => ({
+              group: `depth_${d.depth}`,
+              type: 'depth',
+              depth: d.depth,
+              elapsed_seconds_median: d.time,
+              run_count: d.run_count ?? 1
+            }));
+            const threads = (response.reversan.thread_times || []).map((t: any) => ({
+              group: `threads_${t.threads}`,
+              type: 'threads',
+              threads: t.threads,
+              elapsed_seconds_median: t.time,
+              run_count: t.run_count ?? 1
+            }));
+            convertedResponse.processed_benchmarks.push({
+              benchmark_type: 'reversan',
+              hardware_type: type,
+              data_points: [...depth, ...threads],
+              median_values: response.reversan,
+              stats: {},
+              file_count: 1,
+              valid_file_count: 1
+            });
+          }
+          
+          if (response.blender) {
+            // If server provides scene_scores, map them to data_points for UI
+            const sceneScores = Array.isArray(response.blender.scene_scores) ? response.blender.scene_scores : [];
+            const data_points = sceneScores.map((s: any) => ({
+              scene: s.scene,
+              samples_per_minute_median: (typeof s.samples_per_minute === 'number') ? s.samples_per_minute : s.samples_per_minute_median,
+              elapsed_seconds_median: (typeof s.elapsed_seconds === 'number') ? s.elapsed_seconds : s.elapsed_seconds_median,
+              run_count: s.run_count ?? 1
+            }));
+            const stats = {
+              scenes: response.blender.scenesCount ?? data_points.length
+            } as any;
+
+            convertedResponse.processed_benchmarks.push({
+              benchmark_type: 'blender',
+              hardware_type: type,
+              data_points,
+              median_values: response.blender,
+              stats,
+              file_count: 1,
+              valid_file_count: 1
+            });
+          }
+          
+          if (response['7zip']) {
+            convertedResponse.processed_benchmarks.push({
+              benchmark_type: '7zip',
+              hardware_type: type,
+              data_points: [],
+              median_values: response['7zip'],
+              stats: {},
+              file_count: 1,
+              valid_file_count: 1
+            });
+          }
+          
+          return convertedResponse;
         }
-
-        // Create the base hardware info
-        const hardwareInfo: HardwareInfo = {
-          id: hardwareData.id,
-          name: hardwareData.name,
-          type: hardwareData.type || type,
-          manufacturer: hardwareData.manufacturer,
-          ...(hardwareData.cores ? { cores: hardwareData.cores } : {}),
-          ...(hardwareData.framework ? { framework: hardwareData.framework } : {})
-        };
-
-        this._isLoading.set(false);
-        return {
-          hardware: hardwareInfo,
-          benchmarks: hardwareData.benchmarkFiles || [],
-          charts: []
-        };
+        return null;
       }),
-      catchError(error => {
-        console.error('Failed to load hardware details:', error);
-        this._error.set('Failed to load hardware details');
-        this._isLoading.set(false);
-        return of({
-          hardware: {
-            id,
-            name: 'Unknown Hardware',
-            type
-          } as HardwareInfo,
-          benchmarks: [],
-          charts: []
-        });
+      catchError((error: any) => {
+        console.error(`Failed to load hardware detail for ${type}/${id}:`, error);
+        this._error.set(`Failed to load hardware detail for ${type}/${id}`);
+        return of(null);
       })
     );
   }
 
-  /**
-   * Load processed benchmark data for specific hardware from API
-   */
-  loadProcessedBenchmarkData(type: 'cpu' | 'gpu', id: string): Observable<ProcessedBenchmarkData[]> {
-    return this.http.get<ProcessedBenchmarkResponse>(`${this.apiBaseUrl}/hardware-processed-data?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`).pipe(
-      map(response => response.data || []),
-      catchError(error => {
-        console.error(`Failed to load processed benchmark data for ${type}/${id}:`, error);
-        return of([]);
-      })
-    );
-  }
+  // Removed loadProcessedBenchmarkData - no longer needed
 
   /**
-   * Load specific benchmark file for hardware - DEPRECATED - use loadProcessedBenchmarkData instead
-   */
-  loadBenchmarkFile(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any> {
-    console.warn('loadBenchmarkFile is deprecated, use loadProcessedBenchmarkData instead');
-    return this.loadProcessedBenchmarkData(type, id).pipe(
-      map(data => {
-        const benchmark = data.find(b => b.benchmark_type === benchmarkType);
-        return benchmark || null;
-      })
-    );
-  }
-
-  /**
-   * Load benchmark files for hardware - DEPRECATED - use loadProcessedBenchmarkData instead
-   */
-  loadBenchmarkFiles(type: 'cpu' | 'gpu', id: string, benchmarkType: string): Observable<any[]> {
-    console.warn('loadBenchmarkFiles is deprecated, use loadProcessedBenchmarkData instead');
-    return this.loadProcessedBenchmarkData(type, id).pipe(
-      map(data => {
-        const benchmark = data.find(b => b.benchmark_type === benchmarkType);
-        return benchmark ? [benchmark] : [];
-      })
-    );
-  }
-
-  /**
-   * Search hardware by name or type
-   */
-  searchHardware(query: string): Observable<HardwareSummary[]> {
-    const searchTerm = query.toLowerCase();
-    const allHardware = [...this.cpuList(), ...this.gpuList()];
-    
-    const filtered = allHardware.filter(hw => 
-      hw.hardware.name.toLowerCase().includes(searchTerm) ||
-      hw.hardware.type.toLowerCase().includes(searchTerm) ||
-      hw.hardware.manufacturer?.toLowerCase().includes(searchTerm)
-    );
-
-    return of(filtered);
-  }
-
-  /**
-   * Get hardware by ID
+   * Get hardware by ID from the loaded data
    */
   getHardwareById(id: string): HardwareSummary | null {
-    const allHardware = [...this.cpuList(), ...this.gpuList()];
-    return allHardware.find(hw => hw.hardware.id === id) || null;
+    return this.allHardware().find((hw: HardwareSummary) => hw.hardware.id === id) || null;
   }
+
+  // Removed loadBenchmarkData - no longer needed
+
+  // Removed loadChartData - no longer needed
 
   /**
    * Clear error state
@@ -264,5 +255,10 @@ export class HardwareDataService {
     this._error.set(null);
   }
 
-  // Removed legacy mock methods to avoid confusion
+  /**
+   * Force reload of hardware list
+   */
+  reload(): void {
+    this.loadHardwareList().subscribe();
+  }
 }

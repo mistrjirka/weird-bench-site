@@ -1,6 +1,6 @@
 """
-Clean FastAPI application for Weird Bench - Unified Format Only
-Version 2.0.0 - No legacy format support
+Simplified FastAPI application for Weird Bench - Unified Format Only
+Version 2.1.0 - Clean API without legacy support
 """
 
 from fastapi import FastAPI, HTTPException, Request, File, UploadFile, Form
@@ -9,27 +9,26 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-
+from sqlalchemy import select, func
 import json
 import time
 import logging
+import traceback
 import os
 from pathlib import Path
 from typing import Dict, Any
 
-# Import models and services
-from models import (
-    HealthResponse, 
-    HardwareListResponse, 
-    HardwareDetailResponse,
-    ProcessedBenchmarkResponse,
+# Import simplified models and services
+from simplified_models import (
+    HealthResponse,
+    SimpleHardwareListResponse,
+    HardwareDetailResponse, 
     UploadResponse,
     UploadResult
 )
-from unified_models import UnifiedBenchmarkData
-from services.storage_manager import StorageManager
-from services.unified_storage_processor import UnifiedStorageProcessor
-from services.json_validator import JsonValidator
+from simplified_storage_manager import SimplifiedStorageManager
+# Simple direct upload processing - no legacy conversion
+from database import database, Hardware, BenchmarkRun, BenchmarkFile
 from database import database
 
 # Configure logging
@@ -39,8 +38,8 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI(
     title="Weird Bench API",
-    description="Backend API for unified benchmark data management",
-    version="2.0.0",
+    description="Simplified backend API for unified benchmark data management", 
+    version="2.1.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc"
 )
@@ -54,10 +53,90 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize services
-storage_manager = StorageManager()
-unified_processor = UnifiedStorageProcessor()
-json_validator = JsonValidator()
+# Initialize simplified services
+storage_manager = SimplifiedStorageManager()
+
+
+async def process_unified_upload_direct(unified_data: Dict[str, Any], run_id: str, timestamp: str) -> UploadResult:
+    """Process unified upload directly without legacy conversion."""
+    from datetime import datetime
+    
+    # Extract hardware info from meta
+    meta = unified_data.get('meta', {})
+    hardware_info = meta.get('hardware', {})
+    
+    if not hardware_info:
+        raise HTTPException(status_code=400, detail="No hardware information found in upload")
+    
+    async with database.get_session() as session:
+        stored_benchmarks = []
+        hardware_ids = []
+        
+        # Process each hardware device
+        for hw_id, hw_data in hardware_info.items():
+            # Create or get hardware entry
+            result = await session.execute(
+                select(Hardware).where(Hardware.id == hw_id)
+            )
+            hardware = result.scalar_one_or_none()
+            
+            if not hardware:
+                # Create new hardware entry
+                hardware = Hardware(
+                    id=hw_id,
+                    name=hw_data.get('name', 'Unknown'),
+                    type=hw_data.get('type', 'unknown'),
+                    manufacturer=hw_data.get('manufacturer', 'Unknown'),
+                    cores=hw_data.get('cores'),
+                    framework=hw_data.get('framework')
+                )
+                session.add(hardware)
+                await session.flush()  # Get the ID
+            
+            hardware_ids.append(hw_id)
+            
+            # Get next run number for this hardware
+            result = await session.execute(
+                select(func.max(BenchmarkRun.run_number)).where(BenchmarkRun.hardware_id == hw_id)
+            )
+            max_run_number = result.scalar() or 0
+            next_run_number = max_run_number + 1
+            
+            # Create benchmark run
+            run_timestamp = datetime.fromtimestamp(float(timestamp))
+            benchmark_run = BenchmarkRun(
+                run_id=run_id,
+                hardware_id=hw_id,
+                timestamp=run_timestamp,
+                run_number=next_run_number
+            )
+            session.add(benchmark_run)
+            await session.flush()  # Get the ID
+            
+            # Store each benchmark type directly (no legacy conversion)
+            benchmark_types = ['llama', 'reversan', 'sevenzip', 'blender']
+            for bench_type in benchmark_types:
+                if bench_type in unified_data and unified_data[bench_type] is not None:
+                    # Store the benchmark data directly from unified format
+                    benchmark_file = BenchmarkFile(
+                        benchmark_run_id=benchmark_run.id,
+                        benchmark_type=bench_type if bench_type != 'sevenzip' else '7zip',  # Normalize name
+                        filename=f"{run_id}_{bench_type}.json",  # Generate filename
+                        file_path=f"unified/{run_id}_{bench_type}.json",  # Generate path
+                        file_size=len(str(unified_data[bench_type])),
+                        data=unified_data[bench_type]  # Store unified format directly
+                    )
+                    session.add(benchmark_file)
+                    stored_benchmarks.append(bench_type)
+        
+        await session.commit()
+        
+        return UploadResult(
+            hardware_id=','.join(hardware_ids),
+            hardware_type='mixed',
+            stored_benchmarks=stored_benchmarks,
+            run_id=run_id
+        )
 
 
 # Application lifecycle events
@@ -131,20 +210,73 @@ async def general_exception_handler(request: Request, exc: Exception):
 async def health_check():
     """Health check endpoint."""
     return HealthResponse(
-        success=True,
-        status="API is running",
-        timestamp=int(time.time()),
-        version="2.0.0"
+        status="healthy",
+        version="2.1.0",
+        timestamp=int(time.time())
     )
 
 
-@app.get("/api/hardware", response_model=HardwareListResponse)
+@app.get("/api/debug/database")
+async def debug_database():
+    """DEBUG: Dump all database contents to logs."""
+    try:
+        async with database.get_session() as session:
+            # Get all hardware
+            hardware_result = await session.execute(select(Hardware))
+            hardware_list = hardware_result.scalars().all()
+            
+            logger.info("=== DATABASE DEBUG DUMP ===")
+            logger.info(f"🖥️  HARDWARE ENTRIES: {len(hardware_list)}")
+            
+            for hw in hardware_list:
+                logger.info(f"  • {hw.id}: {hw.name} ({hw.type}) - {hw.manufacturer}")
+            
+            # Get all benchmark runs
+            runs_result = await session.execute(select(BenchmarkRun))
+            runs_list = runs_result.scalars().all()
+            
+            logger.info(f"🏃 BENCHMARK RUNS: {len(runs_list)}")
+            
+            for run in runs_list:
+                logger.info(f"  • {run.run_id}: Hardware {run.hardware_id} at {run.timestamp}")
+            
+            # Get all benchmark files
+            files_result = await session.execute(select(BenchmarkFile))
+            files_list = files_result.scalars().all()
+            
+            logger.info(f"📁 BENCHMARK FILES: {len(files_list)}")
+            
+            for bf in files_list:
+                data_preview = str(bf.data)[:100] + "..." if bf.data and len(str(bf.data)) > 100 else str(bf.data)
+                logger.info(f"  • {bf.benchmark_type}: Run {bf.benchmark_run_id}, Size {bf.file_size}b")
+                logger.info(f"    Data: {data_preview}")
+            
+            logger.info("=== END DATABASE DUMP ===")
+            
+            return {
+                "success": True,
+                "hardware_count": len(hardware_list),
+                "benchmark_runs": len(runs_list), 
+                "benchmark_files": len(files_list),
+                "message": "Database contents dumped to logs",
+                "timestamp": int(time.time())
+            }
+            
+    except Exception as e:
+        logger.error(f"Debug database dump failed: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "timestamp": int(time.time())
+        }
+
+
+@app.get("/api/hardware", response_model=SimpleHardwareListResponse)
 async def get_hardware_list():
-    """Get list of all hardware with benchmark summaries."""
+    """Get simplified list of all hardware with clean comparison data."""
     try:
         hardware_data = await storage_manager.get_hardware_list()
-        return HardwareListResponse(
-            success=True,
+        return SimpleHardwareListResponse(
             data=hardware_data,
             timestamp=int(time.time())
         )
@@ -156,7 +288,7 @@ async def get_hardware_list():
         )
 
 
-@app.get("/api/hardware-detail", response_model=HardwareDetailResponse)
+@app.get("/api/hardware-detail")
 async def get_hardware_detail(type: str, id: str):
     """Get detailed information for specific hardware."""
     if type not in ["cpu", "gpu"]:
@@ -175,54 +307,17 @@ async def get_hardware_detail(type: str, id: str):
         hardware_detail = await storage_manager.get_hardware_detail(type, id)
         if not hardware_detail:
             raise HTTPException(
-                status_code=404, 
+                status_code=404,
                 detail=f"Hardware {type}/{id} not found"
             )
-            
-        return HardwareDetailResponse(
-            success=True,
-            data=hardware_detail,
-            timestamp=int(time.time())
-        )
+        return hardware_detail
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error getting hardware detail {type}/{id}: {str(e)}")
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail="Failed to retrieve hardware details"
-        )
-
-
-@app.get("/api/hardware-processed-data", response_model=ProcessedBenchmarkResponse)
-async def get_hardware_processed_data(type: str, id: str):
-    """Get processed and aggregated benchmark data for specific hardware."""
-    if type not in ["cpu", "gpu"]:
-        raise HTTPException(
-            status_code=400, 
-            detail="Type must be 'cpu' or 'gpu'"
-        )
-    
-    if not id:
-        raise HTTPException(
-            status_code=400, 
-            detail="Hardware ID is required"
-        )
-    
-    try:
-        processed_data = await storage_manager.get_processed_benchmark_data(type, id)
-        return ProcessedBenchmarkResponse(
-            success=True,
-            data=processed_data,
-            timestamp=int(time.time())
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting processed data for {type}/{id}: {str(e)}")
-        raise HTTPException(
-            status_code=500, 
-            detail="Failed to retrieve processed benchmark data"
         )
 
 
@@ -284,19 +379,9 @@ async def upload_unified_benchmark(request: Request):
                 detail=f"Invalid JSON in file: {str(e)}"
             )
         
-        # Validate unified format structure
-        is_valid, validation_errors = json_validator.validate_unified_format(unified_data)
-        if not is_valid:
-            error_message = f"Invalid unified format: {'; '.join(validation_errors)}"
-            logger.error(f"Validation failed for {filename}: {error_message}")
-            raise HTTPException(
-                status_code=400, 
-                detail=f"{error_message}. Use unified_runner.py to generate the correct format."
-            )
-        
-        # Process the unified upload
+        # Process the unified upload directly
         try:
-            result = await unified_processor.process_unified_upload(
+            result = await process_unified_upload_direct(
                 unified_data, 
                 run_id,
                 timestamp
@@ -304,7 +389,6 @@ async def upload_unified_benchmark(request: Request):
             
             logger.info(f"Successfully processed unified benchmark upload: {filename}")
             return UploadResponse(
-                success=True,
                 message=f"Successfully uploaded {len(result.stored_benchmarks)} benchmark(s) for hardware {result.hardware_id}",
                 data=result,
                 timestamp=int(time.time())
