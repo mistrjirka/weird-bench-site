@@ -45,3 +45,4 @@ Thumbs.db
 *.pyc
 __pycache__/
 models/*.gguf
+models/*.gguf
